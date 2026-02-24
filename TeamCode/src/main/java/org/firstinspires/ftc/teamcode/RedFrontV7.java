@@ -1,3 +1,4 @@
+
 package org.firstinspires.ftc.teamcode;
 
 import com.pedropathing.follower.Follower;
@@ -48,26 +49,31 @@ public class RedFrontV7 extends OpMode {
     private static final double SHOOTER_KF = 15.5;
 
     // ================= MOVEMENT BLEND =================
-    // Pedro velocity magnitude units are typically inches/sec (depends on config), this is just a blend scaler
     private static final double SPEED_FULL_BLEND = 40.0;
 
     // ================= SCORE WINDOW (AIM TIMEOUT) =================
-    // shoot anyway after this additional time (after spinup window)
     private static final double AIM_TIMEOUT_SEC = 0.35;
 
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
     private double shootingSequenceStart = 0.0;
-    private static final double SHOOT_FEED_SEC = 1.5;  // how long to feed balls through
+    private static final double SHOOT_FEED_SEC = 1.5;
 
     // ================= SHOOTER SPIN-UP DELAY =================
-    private static final double SHOOTER_SPINUP_SEC = 1.8; // give flywheel time before feeding
+    // ONLY used for FIRST shot window now
+    private static final double SHOOTER_SPINUP_SEC = 6.0;
+
+    // ================= NEW: QUICK SETTLE FOR SUBSEQUENT SHOTS =================
+    // Give turret 200ms to settle at each later shooting position (no flywheel spinup)
+    private static final double SHOOT_SETTLE_SEC = 0.20;
+
+    // ================= NEW: FIRST-SPINUP DONE FLAG =================
+    private boolean firstSpinupDone = false;
 
     // ================= SHOOT FEED PULSE STATE =================
     private boolean shootPulseActive = false;
     private double shootPulseStart = 0;
 
-    // FIXED per your request:
     private static final double SHOOT_PULSE_ON_SEC = 0.25;
     private static final double SHOOT_PULSE_OFF_SEC = 0.10;
 
@@ -96,7 +102,7 @@ public class RedFrontV7 extends OpMode {
     private final Pose driveThroughLine1 = new Pose(132, 42.5, Math.toRadians(0));
     private final Pose driveToShoot2 = new Pose(83, 25, Math.toRadians(62.5));
     private final Pose toArtifactLine2 = new Pose(100, 66.5, Math.toRadians(0));
-    private final Pose driveThroughLine2 = new Pose(136, 66.5, Math.toRadians(0));
+    private final Pose driveThroughLine2 = new Pose(132, 66.5, Math.toRadians(0));
     private final Pose driveToShoot3 = new Pose(83, 25, Math.toRadians(64));
     private final Pose leavePose = new Pose(100, 36, Math.toRadians(180));
 
@@ -157,16 +163,24 @@ public class RedFrontV7 extends OpMode {
         shootPulseActive = false;
     }
 
-    /** Common “shoot window” used at scorePose / shoot2 / shoot3 */
-    private boolean runShootWindow() {
+    /** FIRST shot window (includes flywheel spinup delay). */
+    private boolean runShootWindowFirst() {
         double now = getRuntime();
         double t = now - stateStartTime;
+
+        // If we already did first spinup (shouldn’t happen in normal flow), fall back to quick behavior.
+        if (firstSpinupDone) {
+            return runShootWindowQuick();
+        }
 
         // 1) Spin-up window: do NOT feed
         if (t < SHOOTER_SPINUP_SEC) {
             intakeStop();
             return false;
         }
+
+        // Once we get past spinup time, mark it done forever (flywheel stays running)
+        firstSpinupDone = true;
 
         // 2) Wait for aim stable OR timeout (after spinup)
         boolean aimOk = turret.isAimedStable(now);
@@ -185,10 +199,38 @@ public class RedFrontV7 extends OpMode {
         // 3) Feed for SHOOT_FEED_SEC (latched)
         intakeShootFeed();
 
-        if ((now - shootingSequenceStart) >= SHOOT_FEED_SEC) {
-            return true;
+        return (now - shootingSequenceStart) >= SHOOT_FEED_SEC;
+    }
+
+    /** Subsequent shot windows (NO flywheel spinup; adds 200ms settle time). */
+    private boolean runShootWindowQuick() {
+        double now = getRuntime();
+        double t = now - stateStartTime;
+
+        // 0) Small settle time so turret can “finish” its last little correction
+        if (t < SHOOT_SETTLE_SEC) {
+            intakeStop();
+            return false;
         }
-        return false;
+
+        // 1) Wait for aim stable OR timeout (no spinup added here)
+        boolean aimOk = turret.isAimedStable(now);
+        boolean timedOut = t >= (SHOOT_SETTLE_SEC + AIM_TIMEOUT_SEC);
+
+        if (!shootingSequenceActive) {
+            if (aimOk || timedOut) {
+                shootingSequenceActive = true;
+                shootingSequenceStart = now;
+            } else {
+                intakeStop();
+                return false;
+            }
+        }
+
+        // 2) Feed for SHOOT_FEED_SEC (latched)
+        intakeShootFeed();
+
+        return (now - shootingSequenceStart) >= SHOOT_FEED_SEC;
     }
 
     // ================= AUTO STATE MACHINE =================
@@ -196,17 +238,16 @@ public class RedFrontV7 extends OpMode {
         switch (pathState) {
 
             case 0:
-                // Start: go to score pose
                 intakeStop();
                 follower.followPath(scorePreload);
                 setPathState(1);
                 break;
 
             case 1:
-                // At score pose: shoot preload, then go to line 1
+                // FIRST shooting position: use spinup window once
                 if (!follower.isBusy()) {
-                    if (runShootWindow()) {
-                        intakeSlow(); // start collecting while heading to line 1
+                    if (runShootWindowFirst()) {
+                        intakeSlow();
                         follower.followPath(driveToLine1, true);
                         setPathState(2);
                     }
@@ -214,7 +255,6 @@ public class RedFrontV7 extends OpMode {
                 break;
 
             case 2:
-                // Drive to line 1 endpoint, then sweep through line 1
                 if (!follower.isBusy()) {
                     intakeSlow();
                     follower.followPath(pickUpLine1, true);
@@ -223,18 +263,17 @@ public class RedFrontV7 extends OpMode {
                 break;
 
             case 3:
-                // After sweeping line 1, go back to shoot 2
                 if (!follower.isBusy()) {
-                    intakeStop(); // stop while traveling back to shoot pose (optional)
+                    intakeStop();
                     follower.followPath(goShoot2, true);
                     setPathState(4);
                 }
                 break;
 
             case 4:
-                // At shoot 2 pose: shoot, then go to line 2
+                // Subsequent shoot: NO spinup, just 200ms settle + aim gate/timeout + pulse/feed
                 if (!follower.isBusy()) {
-                    if (runShootWindow()) {
+                    if (runShootWindowQuick()) {
                         intakeSlow();
                         follower.followPath(driveToLine2, true);
                         setPathState(5);
@@ -243,7 +282,6 @@ public class RedFrontV7 extends OpMode {
                 break;
 
             case 5:
-                // Drive to line 2 endpoint, then sweep through line 2
                 if (!follower.isBusy()) {
                     intakeSlow();
                     follower.followPath(pickUpLine2, true);
@@ -252,7 +290,6 @@ public class RedFrontV7 extends OpMode {
                 break;
 
             case 6:
-                // After sweeping line 2, go back to shoot 3
                 if (!follower.isBusy()) {
                     intakeStop();
                     follower.followPath(goShoot3, true);
@@ -261,9 +298,9 @@ public class RedFrontV7 extends OpMode {
                 break;
 
             case 7:
-                // At shoot 3 pose: shoot, then leave
+                // Subsequent shoot: NO spinup, just 200ms settle + aim gate/timeout + pulse/feed
                 if (!follower.isBusy()) {
-                    if (runShootWindow()) {
+                    if (runShootWindowQuick()) {
                         intakeStop();
                         follower.followPath(leaveOutChain, true);
                         setPathState(8);
@@ -272,7 +309,6 @@ public class RedFrontV7 extends OpMode {
                 break;
 
             case 8:
-                // Done when leave path completes
                 if (!follower.isBusy()) {
                     intakeStop();
                     setPathState(-1);
@@ -280,7 +316,6 @@ public class RedFrontV7 extends OpMode {
                 break;
 
             default:
-                // idle
                 break;
         }
     }
@@ -294,8 +329,8 @@ public class RedFrontV7 extends OpMode {
         lastLoopTime = now;
         if (dt < 0.001) dt = 0.001;
 
-        // Shooter always on (no spool delay needed from driver)
-        shooterOnComp(2350);
+        // Shooter always on
+        shooterOnComp(5000);
 
         // IMPORTANT: choose paths FIRST, then update follower
         autonomousPathUpdate();
@@ -313,18 +348,11 @@ public class RedFrontV7 extends OpMode {
         turret.update(now, dt, moveBlend, omegaDps);
 
         telemetry.addData("pathState", pathState);
-        telemetry.addData("busy", follower.isBusy());
-        telemetry.addData("x", follower.getPose().getX());
-        telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading(rad)", follower.getPose().getHeading());
-        telemetry.addData("speed", "%.2f", speed);
-        telemetry.addData("omega dps", "%.2f", omegaDps);
-
+        telemetry.addData("firstSpinupDone", firstSpinupDone);
+        telemetry.addData("timeInState", "%.2f", (now - stateStartTime));
+        telemetry.addData("aimStable", turret.isAimedStable(now));
         telemetry.addData("tx", "%.2f", turret.getLastTx());
-        telemetry.addData("turret pwr", "%.3f", turret.getPower());
-        telemetry.addData("aim stable", turret.isAimedStable(now));
-
-        telemetry.addData("time in state", "%.2f", (now - stateStartTime));
+        telemetry.addData("turretPwr", "%.3f", turret.getPower());
         telemetry.update();
     }
 
@@ -354,12 +382,12 @@ public class RedFrontV7 extends OpMode {
         } catch (Exception ignored) {}
 
         // Servos
-        lt = hardwareMap.get(Servo.class, "lt"); //2
-        rt = hardwareMap.get(Servo.class, "rt"); //1
-        ki = hardwareMap.get(Servo.class, "ki"); //0
+        lt = hardwareMap.get(Servo.class, "lt");
+        rt = hardwareMap.get(Servo.class, "rt");
+        ki = hardwareMap.get(Servo.class, "ki");
 
-        lt.setPosition(0.35);
-        rt.setPosition(0.35);
+        lt.setPosition(0.1);
+        rt.setPosition(0.1);
         ki.setPosition(0.2);
 
         // Turret tracker init
@@ -370,18 +398,22 @@ public class RedFrontV7 extends OpMode {
         pauseActive = false;
         pauseEnd = 0;
 
-        setPathState(-1); // idle until start()
+        // Only spin up once per autonomous
+        firstSpinupDone = false;
+
+        setPathState(-1);
     }
 
     @Override
     public void start() {
         lastLoopTime = getRuntime();
 
-        // Reset pause
         pauseActive = false;
         pauseEnd = 0;
 
-        // Start routine
+        // Reset the “spinup once” flag at match start
+        firstSpinupDone = false;
+
         setPathState(0);
     }
 
@@ -402,7 +434,6 @@ public class RedFrontV7 extends OpMode {
 
         double now = getRuntime();
 
-        // Start pulse the first time this function is called
         if (!shootPulseActive) {
             shootPulseActive = true;
             shootPulseStart = now;
@@ -410,21 +441,18 @@ public class RedFrontV7 extends OpMode {
 
         double t = now - shootPulseStart;
 
-        // Phase 1: ON for 0.25s
         if (t < SHOOT_PULSE_ON_SEC) {
             fi.setPower(1.0);
             bi.setPower(1.0);
             return;
         }
 
-        // Phase 2: OFF for 0.10s
         if (t < SHOOT_PULSE_ON_SEC + SHOOT_PULSE_OFF_SEC) {
             fi.setPower(0.0);
             bi.setPower(0.0);
             return;
         }
 
-        // Phase 3: ON forever
         fi.setPower(1.0);
         bi.setPower(1.0);
     }
@@ -473,31 +501,17 @@ public class RedFrontV7 extends OpMode {
         private boolean aimHold = false;
         private double aimStart = 0;
 
-        // derivative state
         private double lastErr = 0;
 
-        // =========================================================
-        // SIGN KNOBS
-        // =========================================================
-        // If turret turns WRONG way when tx > 0, flip TX_SIGN to -1.
         private static final int TX_SIGN = 1;
-
-        // If turret behaves fine when NOT turning, but "leads away" while turning, flip LEAD_SIGN to -1.
         private static final int LEAD_SIGN = 1;
 
-        // =========================================================
-        // Tunables
-        // =========================================================
         private static final double KP = 0.045;
         private static final double KD = 0.003;
 
-        // feedforward base (scaled down near center)
         private static final double FF = 0.012;
-
-        // predictive lead reduced to prevent overshoot
         private static final double LEAD_TIME = 0.03;
 
-        // ===== Loosened aiming gate =====
         private static final double AIM_TOL = 2.5;
         private static final double AIM_PWR_TOL = 0.12;
         private static final double AIM_STABLE = 0.12;
@@ -505,8 +519,6 @@ public class RedFrontV7 extends OpMode {
         public void init(HardwareMap hw) {
             turret = hw.get(DcMotorEx.class, "turretSpin");
             turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-            // IMPORTANT: match your TeleOp (RCRED) direction
             turret.setDirection(DcMotorSimple.Direction.REVERSE);
 
             limelight = hw.get(Limelight3A.class, "limelight");
@@ -521,7 +533,6 @@ public class RedFrontV7 extends OpMode {
                     )));
             imu.resetYaw();
 
-            // reset state
             lastTx = 0;
             lastPower = 0;
             txFiltered = 0;
@@ -530,7 +541,6 @@ public class RedFrontV7 extends OpMode {
             lastErr = 0;
         }
 
-        /** omegaDps should be deg/sec (you already convert from Pedro rad/sec) */
         public void update(double now, double dt, double moveBlend, double omegaDps) {
 
             if (dt < 0.001) dt = 0.001;
@@ -546,40 +556,33 @@ public class RedFrontV7 extends OpMode {
             double txRaw = r.getTx();
             lastTx = txRaw;
 
-            // 1) Predictive lead + SIGN KNOBS
             double txPred = (TX_SIGN * txRaw) + (LEAD_SIGN * omegaDps * LEAD_TIME);
 
-            // 2) Smoothing (less lag while moving)
             double alpha = (moveBlend > 0.2) ? 0.28 : 0.55;
             txFiltered = alpha * txFiltered + (1.0 - alpha) * txPred;
 
             double error = txFiltered;
             double errAbs = Math.abs(error);
 
-            // 3) Derivative
             double dErr = (error - lastErr) / dt;
             lastErr = error;
 
             double p = KP * error;
             double d = KD * dErr;
 
-            // 4) Feedforward fades out near center
             double ffScale = clip((errAbs - 1.5) / (8.0 - 1.5), 0.0, 1.0);
             double ff = FF * omegaDps * (1.0 + moveBlend) * ffScale;
 
             double power = p + d + ff;
 
-            // 5) Braking near center
             double brake = clip(errAbs / 6.0, 0.25, 1.0);
             power *= brake;
 
-            // cap
             power = clip(power, -0.75, 0.75);
 
             turret.setPower(power);
             lastPower = power;
 
-            // Aim-stable gate
             if (errAbs < AIM_TOL && Math.abs(power) < AIM_PWR_TOL) {
                 if (!aimHold) {
                     aimHold = true;
@@ -596,9 +599,5 @@ public class RedFrontV7 extends OpMode {
 
         public double getLastTx() { return lastTx; }
         public double getPower() { return lastPower; }
-
-        private static double clip(double v, double lo, double hi) {
-            return Math.max(lo, Math.min(hi, v));
-        }
     }
 }

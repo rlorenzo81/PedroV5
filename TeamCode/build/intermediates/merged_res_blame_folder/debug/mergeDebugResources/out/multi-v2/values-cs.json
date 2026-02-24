@@ -4,41 +4,7 @@
             "outputFile": "org.firstinspires.ftc.teamcode.TeamCode-mergeDebugResources-40:/values-cs/values-cs.xml",
             "map": [
                 {
-                    "source": "/home/lorenzo/.gradle/caches/8.9/transforms/54327fc486dba706935927183821c8d8/transformed/zxing-android-embedded-4.3.0/res/values-cs/values-cs.xml",
-                    "from": {
-                        "startLines": "2,3,4,5",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "55,114,161,311",
-                        "endColumns": "58,46,149,83",
-                        "endOffsets": "109,156,306,390"
-                    },
-                    "to": {
-                        "startLines": "119,120,121,122",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "10036,10095,10142,10292",
-                        "endColumns": "58,46,149,83",
-                        "endOffsets": "10090,10137,10287,10371"
-                    }
-                },
-                {
-                    "source": "/home/lorenzo/.gradle/caches/8.9/transforms/d97fcbce19cdb39788d20cffec815d7f/transformed/core-1.13.1/res/values-cs/values-cs.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,153,255,356,455,560,667,786",
-                        "endColumns": "97,101,100,98,104,106,118,100",
-                        "endOffsets": "148,250,351,450,555,662,781,882"
-                    },
-                    "to": {
-                        "startLines": "40,41,42,43,44,45,46,118",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "3540,3638,3740,3841,3940,4045,4152,9935",
-                        "endColumns": "97,101,100,98,104,106,118,100",
-                        "endOffsets": "3633,3735,3836,3935,4040,4147,4266,10031"
-                    }
-                },
-                {
-                    "source": "/home/lorenzo/.gradle/caches/8.9/transforms/26243ef55623e944fb88fadf658572c7/transformed/material-1.12.0/res/values-cs/values-cs.xml",
+                    "source": "/home/rlorenzo@essextech.org/.gradle/caches/8.9/transforms/26243ef55623e944fb88fadf658572c7/transformed/material-1.12.0/res/values-cs/values-cs.xml",
                     "from": {
                         "startLines": "2,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -57,7 +23,41 @@
                     }
                 },
                 {
-                    "source": "/home/lorenzo/.gradle/caches/8.9/transforms/ce2ad3af4cf17368a74e21f17f868bd1/transformed/appcompat-1.6.1/res/values-cs/values-cs.xml",
+                    "source": "/home/rlorenzo@essextech.org/.gradle/caches/8.9/transforms/d97fcbce19cdb39788d20cffec815d7f/transformed/core-1.13.1/res/values-cs/values-cs.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,153,255,356,455,560,667,786",
+                        "endColumns": "97,101,100,98,104,106,118,100",
+                        "endOffsets": "148,250,351,450,555,662,781,882"
+                    },
+                    "to": {
+                        "startLines": "40,41,42,43,44,45,46,118",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "3540,3638,3740,3841,3940,4045,4152,9935",
+                        "endColumns": "97,101,100,98,104,106,118,100",
+                        "endOffsets": "3633,3735,3836,3935,4040,4147,4266,10031"
+                    }
+                },
+                {
+                    "source": "/home/rlorenzo@essextech.org/.gradle/caches/8.9/transforms/54327fc486dba706935927183821c8d8/transformed/zxing-android-embedded-4.3.0/res/values-cs/values-cs.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,114,161,311",
+                        "endColumns": "58,46,149,83",
+                        "endOffsets": "109,156,306,390"
+                    },
+                    "to": {
+                        "startLines": "119,120,121,122",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "10036,10095,10142,10292",
+                        "endColumns": "58,46,149,83",
+                        "endOffsets": "10090,10137,10287,10371"
+                    }
+                },
+                {
+                    "source": "/home/rlorenzo@essextech.org/.gradle/caches/8.9/transforms/ce2ad3af4cf17368a74e21f17f868bd1/transformed/appcompat-1.6.1/res/values-cs/values-cs.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
