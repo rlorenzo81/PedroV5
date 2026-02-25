@@ -18,8 +18,8 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
-@TeleOp(name="RED v6 PulseFeed", group="Robot")
-public class RCREDv6PulseFeed extends OpMode {
+@TeleOp(name="RED v7 RangePulse+FarOffset", group="Robot")
+public class RCRedV7 extends OpMode {
 
     // ----------------- DRIVE -----------------
     private DcMotor lf, lr, rf, rr, fi, bi;
@@ -161,14 +161,17 @@ public class RCREDv6PulseFeed extends OpMode {
     private static final double TURNSTOP_KP_MULT = 0.60;
     private static final double TURNSTOP_KD_MULT = 1.25;
 
-    // ===================== NEW: PULSE FEED TIMING (SHOOTER_FULL) =====================
-    // RB2 (SHOOTER_FULL) will feed ON for FEED_ON_SEC, then OFF for FEED_OFF_SEC, repeating.
+    // ===================== PULSE FEED TIMING (FAR ONLY) =====================
     private static final double FEED_ON_SEC  = 0.20;
     private static final double FEED_OFF_SEC = 0.20;
 
-    // ===================== NEW: RT2 REVERSE OVERRIDE =====================
+    // ===================== RT2 REVERSE OVERRIDE =====================
     private static final double REVERSE_POWER = 0.65;
     private static final double TRIGGER_DEADBAND = 0.10;
+
+    // ===================== NEW: FAR TURRET OFFSET (ONLY WHEN DPAD_DOWN FAR MODE) =====================
+    // Positive values shift aim to one side; tune this at the field.
+    private static final double FAR_TURRET_TX_OFFSET_DEG = 4.0; // <-- CHANGE THIS
 
     // =========================================================
 
@@ -223,11 +226,11 @@ public class RCREDv6PulseFeed extends OpMode {
     private boolean wasTurning = false;
     private double turnStopUntilTime = -999.0;
 
-    // ===================== INTAKE TOGGLES (NO PULSE) =====================
+    // ===================== INTAKE TOGGLES =====================
     private enum IntakeMode {
         OFF,
         INTAKE_SLOW,     // LB2
-        SHOOTER_FULL     // RB2 (pulse-feeding)
+        SHOOTER_FULL     // RB2 (close = straight, far = pulse)
     }
 
     private IntakeMode intakeMode = IntakeMode.OFF;
@@ -235,10 +238,15 @@ public class RCREDv6PulseFeed extends OpMode {
     private boolean lb2WasPressed = false;
     private boolean rb2WasPressed = false;
 
-    // ===================== NEW: PULSE STATE =====================
+    // ===================== PULSE STATE =====================
     private boolean feedPulseOn = false;
     private double feedNextToggleTime = 0.0;
     private IntakeMode lastIntakeMode = IntakeMode.OFF;
+
+    // ===================== RANGE MODE (CLOSE vs FAR) =====================
+    private enum ShotRangeMode { CLOSE, FAR }
+    private ShotRangeMode shotRangeMode = ShotRangeMode.CLOSE;
+    private ShotRangeMode lastShotRangeMode = ShotRangeMode.CLOSE;
 
     // ===================== SPINUP DIAGNOSTICS (REPLACEMENT) =====================
     private SpinUpFastKickThenPIDF spinup;
@@ -344,6 +352,10 @@ public class RCREDv6PulseFeed extends OpMode {
         feedPulseOn = false;
         feedNextToggleTime = 0.0;
 
+        // Range init
+        shotRangeMode = ShotRangeMode.CLOSE;
+        lastShotRangeMode = shotRangeMode;
+
         shooterLastVelDiag = 0.0;
         shooterDvDiag = 0.0;
         shooterWasOnDiag = false;
@@ -390,9 +402,9 @@ public class RCREDv6PulseFeed extends OpMode {
         rr.setPower(br);
 
         // =========================
-        // INTAKE TOGGLES (NO PULSE)
+        // INTAKE TOGGLES
         // LB2: toggle INTAKE_SLOW
-        // RB2: toggle SHOOTER_FULL (pulse-feeding applied later)
+        // RB2: toggle SHOOTER_FULL (close = straight feed, far = pulse feed)
         // B2 : OFF
         // =========================
         boolean lb2Now = gamepad2.left_bumper;
@@ -420,7 +432,9 @@ public class RCREDv6PulseFeed extends OpMode {
         }
 
         // =========================
-        // 1.5) SHOOTER (LATCHED ON PRESS)
+        // 1.5) SHOOTER (LATCHED ON PRESS) + RANGE MODE
+        // A/Y = CLOSE (no pulse feed, no turret offset)
+        // DPAD_DOWN = FAR (pulse feed + turret TX offset)
         // =========================
         boolean a2Now = gamepad2.a;
         boolean y2Now = gamepad2.y;
@@ -430,18 +444,22 @@ public class RCREDv6PulseFeed extends OpMode {
         boolean y2Pressed = y2Now && !y2WasPressed;
         boolean ddownPressed = dDownNow && !dpad_downWasPressed;
 
+        //shooterspeeds
         if (a2Pressed) {
+            shotRangeMode = ShotRangeMode.CLOSE;
             rt.setPosition(.30);
-            shooterSetpoint = 1100;//1290
+            shooterSetpoint = 1260;//1290 & 1100
         }
         if (y2Pressed) {
+            shotRangeMode = ShotRangeMode.CLOSE;
             shooterSetpoint = 1150; //1100
             rt.setPosition(0.3);
         }
 
         if (ddownPressed) {
-            shooterSetpoint = 1640; //1650/1600 range
-            rt.setPosition(0.1);
+            shotRangeMode = ShotRangeMode.FAR;
+            shooterSetpoint = 1610; //1650/1600 range (1640)
+            rt.setPosition(0.2); //was 0.1
         }
 
         a2WasPressed = a2Now;
@@ -515,71 +533,86 @@ public class RCREDv6PulseFeed extends OpMode {
         }
 
         // =========================
-        // NEW: RT2 REVERSE OVERRIDE (HOLD ONLY)
+        // RT2 REVERSE OVERRIDE (HOLD ONLY)
         // =========================
         double rt2 = gamepad2.right_trigger;
         boolean reverseHeld = rt2 > TRIGGER_DEADBAND;
 
         // =========================
-        // NEW: PULSE FEED APPLY (SHOOTER_FULL)
-        // - If in SHOOTER_FULL: pulse ON/OFF
+        // FEED APPLY
+        // - CLOSE (A/Y): straight feed when in SHOOTER_FULL
+        // - FAR (DPAD_DOWN): pulse feed when in SHOOTER_FULL
         // - RT2 reverse overrides everything while held
-        //
-        // ONLY CHANGE REQUESTED:
-        //   Removed dipActive from intake gating (pulse is the only gate now).
         // =========================
 
-        // Reset pulse when mode changes away from SHOOTER_FULL
+        // Reset pulse when intake mode changes away from SHOOTER_FULL
         if (lastIntakeMode != intakeMode) {
             if (intakeMode != IntakeMode.SHOOTER_FULL) {
                 feedPulseOn = false;
                 feedNextToggleTime = 0.0;
             } else {
-                // entering SHOOTER_FULL: start with ON immediately
+                // entering SHOOTER_FULL: start primed (actual behavior depends on range)
                 feedPulseOn = true;
                 feedNextToggleTime = now + FEED_ON_SEC;
             }
             lastIntakeMode = intakeMode;
         }
 
+        // ALSO reset pulse timing when switching into FAR mode (so it starts ON cleanly)
+        if (lastShotRangeMode != shotRangeMode) {
+            if (shotRangeMode == ShotRangeMode.FAR) {
+                feedPulseOn = true;
+                feedNextToggleTime = now + FEED_ON_SEC;
+            }
+            lastShotRangeMode = shotRangeMode;
+        }
+
         if (reverseHeld) {
-            // Reverse intake while trigger is held (no toggles)
             fi.setPower(-REVERSE_POWER);
             bi.setPower(-REVERSE_POWER);
 
         } else if (intakeMode == IntakeMode.INTAKE_SLOW) {
-            // Unchanged
             fi.setPower(1.0);
             bi.setPower(-0.65);
 
         } else if (intakeMode == IntakeMode.SHOOTER_FULL) {
 
             if (!shooterOn) {
-                // If flywheel is off, just run continuous feed (as before)
+                // If flywheel is off, just run continuous feed (same as before)
                 fi.setPower(1.0);
                 bi.setPower(1.0);
 
-                // keep pulse state primed so it behaves consistently when shooter turns on
+                // keep pulse state primed
                 feedPulseOn = true;
                 feedNextToggleTime = now + FEED_ON_SEC;
 
             } else {
-                // Flywheel on: PURE PULSE FEED (dipActive does not affect feed)
-                if (feedNextToggleTime <= 0.0) {
-                    // safety init
-                    feedPulseOn = true;
-                    feedNextToggleTime = now + FEED_ON_SEC;
-                } else if (now >= feedNextToggleTime) {
-                    feedPulseOn = !feedPulseOn;
-                    feedNextToggleTime = now + (feedPulseOn ? FEED_ON_SEC : FEED_OFF_SEC);
-                }
+                if (shotRangeMode == ShotRangeMode.FAR) {
+                    // FAR: PULSE FEED
+                    if (feedNextToggleTime <= 0.0) {
+                        feedPulseOn = true;
+                        feedNextToggleTime = now + FEED_ON_SEC;
+                    } else if (now >= feedNextToggleTime) {
+                        feedPulseOn = !feedPulseOn;
+                        feedNextToggleTime = now + (feedPulseOn ? FEED_ON_SEC : FEED_OFF_SEC);
+                    }
 
-                if (feedPulseOn) {
+                    if (feedPulseOn) {
+                        fi.setPower(1.0);
+                        bi.setPower(1.0);
+                    } else {
+                        fi.setPower(0.0);
+                        bi.setPower(0.0);
+                    }
+
+                } else {
+                    // CLOSE: STRAIGHT FEED (NO PULSE)
                     fi.setPower(1.0);
                     bi.setPower(1.0);
-                } else {
-                    fi.setPower(0.0);
-                    bi.setPower(0.0);
+
+                    // keep pulse state in a sane primed state if you later go FAR
+                    feedPulseOn = true;
+                    feedNextToggleTime = now + FEED_ON_SEC;
                 }
             }
 
@@ -723,7 +756,11 @@ public class RCREDv6PulseFeed extends OpMode {
 
             if (result != null && result.isValid()) {
                 hasTarget = true;
-                tx = result.getTx();
+
+                // ===== FAR MODE OFFSET APPLIED ONLY WHEN DPAD_DOWN FAR MODE ACTIVE =====
+                double txRaw = result.getTx();
+                double txOffset = (shotRangeMode == ShotRangeMode.FAR) ? FAR_TURRET_TX_OFFSET_DEG : 0.0;
+                tx = txRaw + txOffset;
 
                 lastSeenTime = now;
                 lastSeenTx = tx;
@@ -823,9 +860,12 @@ public class RCREDv6PulseFeed extends OpMode {
         // =========================
         // TELEMETRY
         // =========================
+        telemetry.addData("RangeMode", shotRangeMode.toString());
+        telemetry.addData("FarTxOffsetDeg", FAR_TURRET_TX_OFFSET_DEG);
+
         telemetry.addData("IntakeMode", intakeMode.toString());
         telemetry.addData("ReverseHeld(RT2)", reverseHeld);
-        telemetry.addData("PulseOn", feedPulseOn);
+        telemetry.addData("PulseOn(FAR only)", feedPulseOn);
         telemetry.addData("DipActive", dipActive);
 
         telemetry.addData("Tracking Enabled", trackingEnabled);
