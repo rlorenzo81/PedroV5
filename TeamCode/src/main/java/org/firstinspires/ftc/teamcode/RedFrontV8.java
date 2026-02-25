@@ -385,8 +385,8 @@ public class RedFrontV8 extends OpMode {
         rt = hardwareMap.get(Servo.class, "rt");
         ki = hardwareMap.get(Servo.class, "ki");
 
-        lt.setPosition(0.1);
-        rt.setPosition(0.1);
+        lt.setPosition(0.2);
+        rt.setPosition(0.2);
         ki.setPosition(0.2);
 
         // Turret tracker init
@@ -518,7 +518,7 @@ public class RedFrontV8 extends OpMode {
         // ================= NEW: AIM OFFSET =================
         // Positive moves aim to the RIGHT *if* your Limelight tx is positive-to-the-right.
         // If shots get worse when increasing this, flip sign (use negative).
-        private static final double TURRET_AIM_OFFSET_DEG = 0.0; // <-- TUNE (try 2.0 to 6.0)
+        private static final double TURRET_AIM_OFFSET_DEG = 4.0; // <-- TUNE (try 2.0 to 6.0)
 
         public void init(HardwareMap hw) {
             turret = hw.get(DcMotorEx.class, "turretSpin");
@@ -560,7 +560,6 @@ public class RedFrontV8 extends OpMode {
             double txRaw = r.getTx();
             lastTx = txRaw;
 
-            // Add a constant aim offset in degrees (tx is degrees)
             double txPred =
                     (TX_SIGN * txRaw)
                             + (LEAD_SIGN * omegaDps * LEAD_TIME)
