@@ -34,7 +34,7 @@ public class RedBackV7WithLine1 extends OpMode {
     private Timer pathTimer;
     private int pathState;
     private double stateStartTime = 0.0;
-    double target = 1430.0; // change if needed
+    double target = 1000.0; // change if needed
 
     // ================= TURRET =================
     private final TurretTracker turret = new TurretTracker();
@@ -64,7 +64,7 @@ public class RedBackV7WithLine1 extends OpMode {
 
     // ================= SHOOTER SPIN-UP DELAY =================
     // ONLY used for FIRST shot window now
-    private static final double SHOOTER_SPINUP_SEC = 3.0;
+    private static final double SHOOTER_SPINUP_SEC = 2.0;
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
     private static final double SHOOT_SETTLE_SEC = 0.20;
@@ -102,19 +102,19 @@ public class RedBackV7WithLine1 extends OpMode {
     private final Pose scorePose = new Pose(93, 77, Math.toRadians(53));//89, 87
 
     private final Pose toArtifactLine2 = new Pose(100, 61.5, Math.toRadians(0));
-    private final Pose driveThroughLine2 = new Pose(120, 61.5, Math.toRadians(0));
+    private final Pose driveThroughLine2 = new Pose(125, 61.5, Math.toRadians(0));
     private final Pose driveToShoot2 = new Pose(93, 77, Math.toRadians(0)); // was 53
 
     private final Pose driveTowardsGate1= new Pose(100, 71, Math.toRadians(53)); // was 53
-    private final Pose driveToGate1= new Pose(120, 71, Math.toRadians(53)); // was 53
+    private final Pose driveToGate1= new Pose(127, 74, Math.toRadians(53)); // was 120,71
 
     // intake post
-    private final Pose intakeFromGate = new Pose(121, 69, Math.toRadians(53));
+    private final Pose intakeFromGate = new Pose(129, 69, Math.toRadians(53));
 
     private final Pose driveToShoot3= new Pose(93, 77, Math.toRadians(53)); // was 53
 
     private final Pose driveTowardsGate2= new Pose(100, 71, Math.toRadians(53)); // was 53
-    private final Pose driveToGate2= new Pose(120, 71, Math.toRadians(53)); // was 53
+    private final Pose driveToGate2= new Pose(127, 74, Math.toRadians(53)); // was 127,71
     private final Pose driveToShoot4= new Pose(93, 77, Math.toRadians(53)); // was 53
 
     // ====== NEW (requested) ======
@@ -365,7 +365,7 @@ public class RedBackV7WithLine1 extends OpMode {
             case 4:
                 if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
-                        intakeSlow();
+                        intakeStop();
                         follower.followPath(goGate1Combined, true);
                         setPathState(6);
                     }
@@ -499,7 +499,7 @@ public class RedBackV7WithLine1 extends OpMode {
             spinup.kickMs = 1800;
             spinup.kickPower = 1.0;
             spinup.earlyTakeoverPct = 0.98;
-            spinup.start(1430);
+            spinup.start(1100);
             shooterSpinupStarted = true;
         }
         spinup.update();
@@ -633,9 +633,9 @@ public class RedBackV7WithLine1 extends OpMode {
     // ================= SHOOTER (REPLACEMENT HELPERS) =================
     public static class SpinUpFastKickThenPIDF {
 
-        public long kickMs = 1000;
+        public long kickMs = 1800;
         public double kickPower = 1.0;
-        public double earlyTakeoverPct = 0.85;
+        public double earlyTakeoverPct = 0.95;
         public long maxTotalMs = 3000;
 
         private boolean active = false;
