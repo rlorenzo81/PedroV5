@@ -58,11 +58,11 @@ public class RedFrontV9 extends OpMode {
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
     private double shootingSequenceStart = 0.0;
-    private static final double SHOOT_FEED_SEC = 1.0; // from RedBackV9
+    private static final double SHOOT_FEED_SEC = 3.0; // from RedBackV9
 
     // ================= SHOOTER SPIN-UP DELAY =================
     // ONLY used for FIRST shot window now
-    private static final double SHOOTER_SPINUP_SEC = 7; // from RedBackV9
+    private static final double SHOOTER_SPINUP_SEC = 6.0; // from RedBackV9
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
     private static final double SHOOT_SETTLE_SEC = 1.0;
@@ -75,7 +75,7 @@ public class RedFrontV9 extends OpMode {
     private double shootPulseStart = 0;
 
     private static final double SHOOT_PULSE_ON_SEC = 0.25;
-    private static final double SHOOT_PULSE_OFF_SEC = 0.20;
+    private static final double SHOOT_PULSE_OFF_SEC = 0.25;
 
     // ================= PAUSE (kept for reuse elsewhere) =================
     private boolean pauseActive = false;
@@ -97,13 +97,13 @@ public class RedFrontV9 extends OpMode {
 
     // ================= POSES (KEEP EXACTLY AS RedFrontV8) =================
     private final Pose startPose = new Pose(84, 18, Math.toRadians(90));
-    private final Pose scorePose = new Pose(84, 25, Math.toRadians(65));
+    private final Pose scorePose = new Pose(84, 22, Math.toRadians(65)); //y was 25
     private final Pose toArtifactLine1 = new Pose(98, 42.5, Math.toRadians(0));
-    private final Pose driveThroughLine1 = new Pose(140, 42.5, Math.toRadians(0));
-    private final Pose driveToShoot2 = new Pose(83, 25, Math.toRadians(62.5));
+    private final Pose driveThroughLine1 = new Pose(131, 42.5, Math.toRadians(0));
+    private final Pose driveToShoot2 = new Pose(83, 22, Math.toRadians(62.5)); //y was 25
     private final Pose toArtifactLine2 = new Pose(100, 66.5, Math.toRadians(0));
-    private final Pose driveThroughLine2 = new Pose(140, 66.5, Math.toRadians(0));
-    private final Pose driveToShoot3 = new Pose(83, 25, Math.toRadians(64));
+    private final Pose driveThroughLine2 = new Pose(131, 66.5, Math.toRadians(0));
+    private final Pose driveToShoot3 = new Pose(83, 22, Math.toRadians(64)); //y was 25
     private final Pose leavePose = new Pose(100, 36, Math.toRadians(180));
 
     private Path scorePreload;
@@ -255,8 +255,8 @@ public class RedFrontV9 extends OpMode {
 
             case 3:
                 if (!follower.isBusy()) {
-                    intakeStop();
-                    follower.followPath(goShoot2, true);
+                    intakeHolds();
+                    follower.followPath(goShoot2, 0.5,true);
                     setPathState(4);
                 }
                 break;
@@ -282,8 +282,8 @@ public class RedFrontV9 extends OpMode {
 
             case 6:
                 if (!follower.isBusy()) {
-                    intakeStop();
-                    follower.followPath(goShoot3, true);
+                    intakeHolds();
+                    follower.followPath(goShoot3,0.5, true);
                     setPathState(7);
                 }
                 break;
@@ -373,6 +373,9 @@ public class RedFrontV9 extends OpMode {
         // Intake motors
         fi = hardwareMap.dcMotor.get("fi");
         bi = hardwareMap.dcMotor.get("bi");
+        fi.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bi.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         intakeStop();
 
         // Shooter motor (velocity control)
@@ -396,7 +399,7 @@ public class RedFrontV9 extends OpMode {
 
         lt.setPosition(0.2);
         rt.setPosition(0.2);
-        ki.setPosition(0.2);
+        ki.setPosition(0.15);
 
         // Turret tracker init
         turret.init(hardwareMap);
@@ -440,7 +443,7 @@ public class RedFrontV9 extends OpMode {
         bi.setPower(-0.65);
     }
 
-    /** Pulse ON for 0.25s, OFF for 0.10s, then ON forever until another intake mode is called. */
+    /** Pulse continuously: ON for 0.25s, OFF for 0.30s, repeating as long as shooting window calls this. */
     private void intakeShootFeed() {
 
         double now = getRuntime();
@@ -451,27 +454,28 @@ public class RedFrontV9 extends OpMode {
         }
 
         double t = now - shootPulseStart;
+        double cycle = SHOOT_PULSE_ON_SEC + SHOOT_PULSE_OFF_SEC;
+        double phase = t % cycle;
 
-        if (t < SHOOT_PULSE_ON_SEC) {
+        if (phase < SHOOT_PULSE_ON_SEC) {
             fi.setPower(1.0);
             bi.setPower(1.0);
-            return;
-        }
-
-        if (t < SHOOT_PULSE_ON_SEC + SHOOT_PULSE_OFF_SEC) {
+        } else {
             fi.setPower(0.0);
             bi.setPower(0.0);
-            return;
         }
-
-        fi.setPower(1.0);
-        bi.setPower(1.0);
     }
 
     private void intakeStop() {
         shootPulseActive = false;
         fi.setPower(0.0);
         bi.setPower(0.0);
+    }
+
+    private void intakeHolds() {
+        shootPulseActive = false;
+        fi.setPower(0.1);
+        bi.setPower(0.1);
     }
 
     // ================= SHOOTER (REPLACEMENT HELPERS) =================
@@ -545,7 +549,7 @@ public class RedFrontV9 extends OpMode {
         private static final int TX_SIGN = 1;
         private static final int LEAD_SIGN = 1;
 
-        private static final double KP = 0.045;
+        private static final double KP = 0.055; //was 0.045
         private static final double KD = 0.003;
 
         private static final double FF = 0.012;
