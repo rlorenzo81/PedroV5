@@ -64,7 +64,7 @@ public class RedBackV8WithLine1 extends OpMode {
 
     // ================= SHOOTER SPIN-UP DELAY =================
     // ONLY used for FIRST shot window now
-    private static final double SHOOTER_SPINUP_SEC = 2.0;
+    private static final double SHOOTER_SPINUP_SEC = 2.5; //was 2.0
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
     private static final double SHOOT_SETTLE_SEC = 0.20;
@@ -106,7 +106,7 @@ public class RedBackV8WithLine1 extends OpMode {
     private final Pose driveToShoot2 = new Pose(93, 77, Math.toRadians(0)); // was 53
 
     private final Pose driveTowardsGate1= new Pose(100, 68, Math.toRadians(53)); // was 53
-    private final Pose driveToGate1= new Pose(142, 58, Math.toRadians(53)); // was 120,71
+    private final Pose driveToGate1= new Pose(141, 60, Math.toRadians(53)); // was 120,71 [move y back so it doesnt hit the line (10:09)]
 
     // intake post
     private final Pose intakeFromGate1 = new Pose(143, 56, Math.toRadians(55));
@@ -115,7 +115,7 @@ public class RedBackV8WithLine1 extends OpMode {
     private final Pose driveToShoot3= new Pose(93, 77, Math.toRadians(53)); // was 53
 
     private final Pose driveTowardsGate2= new Pose(100, 71, Math.toRadians(53)); // was 53
-    private final Pose driveToGate2= new Pose(139, 55, Math.toRadians(53)); // was 127,71
+    private final Pose driveToGate2= new Pose(139, 55, Math.toRadians(53)); // was 127,71 [go a little more forward (10:05am)]
     private final Pose driveToShoot4= new Pose(93, 77, Math.toRadians(53)); // was 53
 
     // ====== NEW (requested) ======
@@ -539,6 +539,11 @@ public class RedBackV8WithLine1 extends OpMode {
 
         fi = hardwareMap.dcMotor.get("fi");
         bi = hardwareMap.dcMotor.get("bi");
+        fi.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bi.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+
         intakeStop();
 
         shooter = hardwareMap.get(DcMotorEx.class, "shooter");
