@@ -64,7 +64,7 @@ public class RedBackV9 extends OpMode {
 
     // ================= SHOOTER SPIN-UP DELAY =================
     // ONLY used for FIRST shot window now
-    private static final double SHOOTER_SPINUP_SEC = 3.0; //was 2.0
+    private static final double SHOOTER_SPINUP_SEC = 2.0; //was 2.0
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
     private static final double SHOOT_SETTLE_SEC = 0.20;
@@ -118,16 +118,24 @@ public class RedBackV9 extends OpMode {
     private final Pose driveToGate2= new Pose(142, 58, Math.toRadians(25)); // was 127,71
     private final Pose driveToShoot4= new Pose(97, 92, Math.toRadians(53)); // was 93,95
 
-    // ====== NEW (requested) ======
+    // ====== Line1 pickup + exit curve ======
     private final Pose toArtifactLine1 = new Pose(100, 81, Math.toRadians(0));
     private final Pose driveThroughLine1 = new Pose(133, 81, Math.toRadians(0));
+
+    private final Pose line1ExitMid  = new Pose(127, 81, Math.toRadians(0));
+    private final Pose line1ExitEnd  = new Pose(134, 77, Math.toRadians(0));
+
+    // ====== NEW (requested) midpoint for pickUpLine2 -> goShoot3 curve ======
+    private final Pose line2ToShoot3Mid = new Pose(130, 58, Math.toRadians(0));
+    // ===========================================================
+
+    // (kept but unused in this flow)
     private final Pose driveToShoot5 = new Pose(97, 97, Math.toRadians(53)); // was 93,93
-    // ============================
 
     private final Pose leavePose = new Pose(115, 66, Math.toRadians(0));
 
     private Path scorePreload;
-    private PathChain driveToLine1, pickUpLine1, goShoot2, driveToLine2, pickUpLine2,
+    private PathChain driveToLine1, pickUpLine1, line1ExitCurve, goShoot2, driveToLine2, pickUpLine2,
             onWaytoGate1, toGate1, goShoot3, onWaytoGate2, toGate2, goShoot4, leaveOutChain;
 
     // combined chains
@@ -138,42 +146,48 @@ public class RedBackV9 extends OpMode {
     private PathChain gate1ToIntakePost, intakePostToShoot3;
     private PathChain gate2ToIntakePost, intakePostToShoot4;
 
-    // ====== NEW paths (requested) ======
+    // (kept but unused in this flow)
     private PathChain shoot4ToLine1, line1DriveThrough, line1ToShoot5;
-    // ==================================
 
     public void buildPaths() {
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
-        // ====== REORDER: Line1 first (Score -> Line1 -> Through Line1 -> Shoot2) ======
+        // Score -> Line1 entry
         driveToLine1 = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, toArtifactLine1))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), toArtifactLine1.getHeading())
                 .build();
 
+        // Line1 drive-through (pick up)
         pickUpLine1 = follower.pathBuilder()
                 .addPath(new BezierLine(toArtifactLine1, driveThroughLine1))
                 .setLinearHeadingInterpolation(toArtifactLine1.getHeading(), driveThroughLine1.getHeading())
                 .build();
 
-        goShoot2 = follower.pathBuilder()
-                .addPath(new BezierLine(driveThroughLine1, driveToShoot2))
-                .setLinearHeadingInterpolation(driveThroughLine1.getHeading(), driveToShoot2.getHeading())
+        // After driveThroughLine1, curve: (133,81)->(130,70)->(133,77)
+        line1ExitCurve = follower.pathBuilder()
+                .addPath(new BezierCurve(driveThroughLine1, line1ExitMid, line1ExitEnd))
+                .setLinearHeadingInterpolation(driveThroughLine1.getHeading(), line1ExitEnd.getHeading())
                 .build();
-        // ============================================================================
 
-        // ====== REORDER: After Shoot2 -> Line2 -> Through Line2 -> then Gate1 ======
+        // After Line1 exit -> Shoot2
+        goShoot2 = follower.pathBuilder()
+                .addPath(new BezierLine(line1ExitEnd, driveToShoot2))
+                .setLinearHeadingInterpolation(line1ExitEnd.getHeading(), driveToShoot2.getHeading())
+                .build();
+
+        // After Shoot2 -> Line2 entry
         driveToLine2 = follower.pathBuilder()
                 .addPath(new BezierLine(driveToShoot2, toArtifactLine2))
                 .setLinearHeadingInterpolation(driveToShoot2.getHeading(), toArtifactLine2.getHeading())
                 .build();
 
+        // Line2 drive-through
         pickUpLine2 = follower.pathBuilder()
                 .addPath(new BezierLine(toArtifactLine2, driveThroughLine2))
                 .setLinearHeadingInterpolation(toArtifactLine2.getHeading(), driveThroughLine2.getHeading())
                 .build();
-        // ==========================================================================
 
         onWaytoGate1 = follower.pathBuilder()
                 .addPath(new BezierLine(driveToShoot2, driveTowardsGate1))
@@ -185,16 +199,16 @@ public class RedBackV9 extends OpMode {
                 .setLinearHeadingInterpolation(driveTowardsGate1.getHeading(), driveToGate1.getHeading())
                 .build();
 
-        // gate1 smooth curve (now starts AFTER Line2 drive-through)
+        // kept (unused in this flow, kept)
         goGate1Combined = follower.pathBuilder()
                 .addPath(new BezierCurve(driveThroughLine2, driveTowardsGate1, driveToGate1))
                 .setLinearHeadingInterpolation(driveThroughLine2.getHeading(), driveToGate1.getHeading())
                 .build();
 
-        // kept (unused in new flow)
+        // UPDATED: pickUpLine2 end -> goShoot3 is now a BezierCurve with midpoint (135,58,0)
         goShoot3 = follower.pathBuilder()
-                .addPath(new BezierLine(driveToGate1, driveToShoot3))
-                .setLinearHeadingInterpolation(driveToGate1.getHeading(), driveToShoot3.getHeading())
+                .addPath(new BezierCurve(driveThroughLine2, line2ToShoot3Mid, driveToShoot3))
+                .setLinearHeadingInterpolation(driveThroughLine2.getHeading(), driveToShoot3.getHeading())
                 .build();
 
         onWaytoGate2 = follower.pathBuilder()
@@ -215,19 +229,19 @@ public class RedBackV9 extends OpMode {
                 .setLinearHeadingInterpolation(driveTowardsGate2.getHeading(), driveToGate2.getHeading())
                 .build();
 
-        // kept (unused in new flow)
+        // kept (unused)
         goShoot4 = follower.pathBuilder()
                 .addPath(new BezierLine(driveToGate2, driveToShoot4))
                 .setLinearHeadingInterpolation(driveToGate2.getHeading(), driveToShoot4.getHeading())
                 .build();
 
-        // leaveOutChain now happens AFTER Shoot5
+        // leave after Shoot4
         leaveOutChain = follower.pathBuilder()
-                .addPath(new BezierLine(driveToShoot5, leavePose))
-                .setLinearHeadingInterpolation(driveToShoot5.getHeading(), leavePose.getHeading())
+                .addPath(new BezierLine(driveToShoot4, leavePose))
+                .setLinearHeadingInterpolation(driveToShoot4.getHeading(), leavePose.getHeading())
                 .build();
 
-        // gate -> intake post (gate 1 uses intakeFromGate1)
+        // gate -> intake post (kept)
         gate1ToIntakePost = follower.pathBuilder()
                 .addPath(new BezierLine(driveToGate1, intakeFromGate1))
                 .setLinearHeadingInterpolation(driveToGate1.getHeading(), intakeFromGate1.getHeading())
@@ -249,20 +263,17 @@ public class RedBackV9 extends OpMode {
                 .setLinearHeadingInterpolation(intakeFromGate2.getHeading(), driveToShoot4.getHeading())
                 .build();
 
-        // ====== NEW (requested) ======
-        // After Shoot4, go to Line1 entry
+        // ====== kept but unused ======
         shoot4ToLine1 = follower.pathBuilder()
                 .addPath(new BezierLine(driveToShoot4, toArtifactLine1))
                 .setLinearHeadingInterpolation(driveToShoot4.getHeading(), toArtifactLine1.getHeading())
                 .build();
 
-        // Drive through Line1 (intake slow during this path)
         line1DriveThrough = follower.pathBuilder()
                 .addPath(new BezierLine(toArtifactLine1, driveThroughLine1))
                 .setLinearHeadingInterpolation(toArtifactLine1.getHeading(), driveThroughLine1.getHeading())
                 .build();
 
-        // From driveThroughLine1 to Shoot5
         line1ToShoot5 = follower.pathBuilder()
                 .addPath(new BezierLine(driveThroughLine1, driveToShoot5))
                 .setLinearHeadingInterpolation(driveThroughLine1.getHeading(), driveToShoot5.getHeading())
@@ -370,7 +381,7 @@ public class RedBackV9 extends OpMode {
                 if (!follower.isBusy()) {
                     if (runShootWindowFirst()) {
                         intakeSlow();
-                        follower.followPath(driveToLine1, true);   // Line1 first
+                        follower.followPath(driveToLine1, true);
                         setPathState(2);
                     }
                 }
@@ -379,94 +390,95 @@ public class RedBackV9 extends OpMode {
             case 2:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    follower.followPath(pickUpLine1, true);       // DriveThroughLine1
+                    follower.followPath(pickUpLine1, true);
                     setPathState(3);
                 }
                 break;
 
+            // After driveThroughLine1, run the exit curve
             case 3:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    follower.followPath(goShoot2, true);          // Then shoot
+                    follower.followPath(line1ExitCurve, true);
                     setPathState(4);
                 }
                 break;
 
             case 4:
                 if (!follower.isBusy()) {
-                    if (runShootWindowQuick()) {
-                        intakeSlow();
-                        follower.followPath(driveToLine2, true);  // Then Line2
-                        setPathState(5);
-                    }
+                    // requirement: when it gets to the last point, shut intake off, then goShoot2
+                    intakeStop();
+                    follower.followPath(goShoot2, true);
+                    setPathState(5);
                 }
                 break;
 
             case 5:
                 if (!follower.isBusy()) {
-                    intakeSlow();
-                    follower.followPath(pickUpLine2, true);       // DriveThroughLine2
-                    setPathState(6);
+                    if (runShootWindowQuick()) {
+                        intakeSlow();
+                        follower.followPath(driveToLine2, true);
+                        setPathState(6);
+                    }
                 }
                 break;
 
             case 6:
                 if (!follower.isBusy()) {
-                    intakeStop();
-                    follower.followPath(goGate1Combined, true);   // Then Gate1
+                    intakeSlow();
+                    follower.followPath(pickUpLine2, true);
                     setPathState(7);
                 }
                 break;
 
-            // ---- Gate 1 behavior ----
+            // pickUpLine2 end -> goShoot3 (now BezierCurve)
             case 7:
                 if (!follower.isBusy()) {
-                    intakeSlow();
-                    if (pauseTime(0.5)) {
-                        follower.followPath(gate1ToIntakePost, true);
-                        setPathState(8);
-                    }
+                    intakeStop();
+                    follower.followPath(goShoot3, true);
+                    setPathState(8);
                 }
                 break;
 
+            // Shoot3 -> Gate2
             case 8:
                 if (!follower.isBusy()) {
-                    intakeSlow();
-                    if (pauseTime(1.5)) {
+                    if (runShootWindowQuick()) {
                         intakeStop();
-                        follower.followPath(intakePostToShoot3, true);
+                        follower.followPath(goGate2Combined, true);
                         setPathState(9);
                     }
                 }
                 break;
 
+            // ---- Gate 2 behavior ----
             case 9:
                 if (!follower.isBusy()) {
-                    if (runShootWindowQuick()) {
-                        intakeStop();
-                        follower.followPath(goGate2Combined, true);
+                    intakeSlow();
+                    if (pauseTime(0.5)) {
+                        follower.followPath(gate2ToIntakePost, true);
                         setPathState(10);
                     }
                 }
                 break;
 
-            // ---- Gate 2 behavior ----
             case 10:
-                if (!follower.isBusy()) {
-                    intakeSlow();
-                    if (pauseTime(0.5)) {
-                        follower.followPath(gate2ToIntakePost, true);
-                        setPathState(11);
-                    }
-                }
-                break;
-
-            case 11:
                 if (!follower.isBusy()) {
                     intakeSlow();
                     if (pauseTime(1.5)) {
                         intakeStop();
                         follower.followPath(intakePostToShoot4, true);
+                        setPathState(11);
+                    }
+                }
+                break;
+
+            // Shoot4 -> Leave
+            case 11:
+                if (!follower.isBusy()) {
+                    if (runShootWindowQuick()) {
+                        intakeStop();
+                        follower.followPath(leaveOutChain, true);
                         setPathState(12);
                     }
                 }
@@ -474,53 +486,10 @@ public class RedBackV9 extends OpMode {
 
             case 12:
                 if (!follower.isBusy()) {
-                    if (runShootWindowQuick()) {
-                        // ====== ONLY CHANGE STARTS HERE (requested addition) ======
-                        intakeSlow();
-                        follower.followPath(shoot4ToLine1, true);
-                        setPathState(13);
-                        // =========================================================
-                    }
-                }
-                break;
-
-            // ====== NEW (requested) ======
-            case 13:
-                if (!follower.isBusy()) {
-                    // Drive through Line1 with slow intake (same style as Line2)
-                    intakeSlow();
-                    follower.followPath(line1DriveThrough, true);
-                    setPathState(14);
-                }
-                break;
-
-            case 14:
-                if (!follower.isBusy()) {
-                    // After pickup, stop intake and go to Shoot5
-                    intakeStop();
-                    follower.followPath(line1ToShoot5, true);
-                    setPathState(15);
-                }
-                break;
-
-            case 15:
-                if (!follower.isBusy()) {
-                    // Shoot5
-                    if (runShootWindowQuick()) {
-                        intakeStop();
-                        follower.followPath(leaveOutChain, true);
-                        setPathState(16);
-                    }
-                }
-                break;
-
-            case 16:
-                if (!follower.isBusy()) {
                     intakeStop();
                     setPathState(-1);
                 }
                 break;
-            // ============================
 
             default:
                 break;
@@ -542,7 +511,7 @@ public class RedBackV9 extends OpMode {
 
         // Shooter always on (RAMP VELOCITY ONLY)
         if (!shooterSpinupStarted) {
-            spinup.start(1165, now); //1260
+            spinup.start(1145, now); //1260
             shooterSpinupStarted = true;
         }
         spinup.update(now);
