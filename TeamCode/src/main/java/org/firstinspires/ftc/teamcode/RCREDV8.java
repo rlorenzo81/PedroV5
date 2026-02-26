@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -18,8 +19,9 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
-@TeleOp(name="RED v7 RangePulse+FarOffset", group="Robot")
-public class RCRedV7 extends OpMode {
+@TeleOp(name="RC RED V8", group="Robot")
+@Disabled
+public class RCREDV8 extends OpMode {
 
     // ----------------- DRIVE -----------------
     private DcMotor lf, lr, rf, rr, fi, bi;
@@ -160,12 +162,6 @@ public class RCRedV7 extends OpMode {
     private static final double FEED_ON_SEC  = 0.20;
     private static final double FEED_OFF_SEC = 0.20;
 
-    // ===================== RB2 HOLD PULSE (YOUR NEW REQUEST) =====================
-    // While RB2 is HELD: fi/bi = 1.0 for ON, then 0.0 for OFF, repeating.
-    private static final double RB_HOLD_PULSE_ON_SEC  = 0.20;
-    private static final double RB_HOLD_PULSE_OFF_SEC = 0.30;
-    private static final double RB_HOLD_PULSE_POWER   = 1.00;
-
     // ===================== RT2 OUTTAKE (HOLD ONLY) =====================
     // Per your request: while held, BOTH motors = -0.7
     private static final double REVERSE_POWER = 0.70;
@@ -234,9 +230,8 @@ public class RCRedV7 extends OpMode {
     // ===================== INTAKE TOGGLES =====================
     private enum IntakeMode {
         OFF,
-        INTAKE_SLOW,        // LB2 (toggle)
-        SHOOTER_FULL,       // (kept for compatibility)
-        SHOOTER_PULSE_HOLD  // RB2 (HOLD pulse)
+        INTAKE_SLOW,     // LB2 (toggle)
+        SHOOTER_FULL     // RB2 (toggle)
     }
 
     private IntakeMode intakeMode = IntakeMode.OFF;
@@ -244,17 +239,10 @@ public class RCRedV7 extends OpMode {
     private boolean lb2WasPressed = false;
     private boolean rb2WasPressed = false;
 
-    // RB2 hold restore
-    private IntakeMode preRbHoldMode = IntakeMode.OFF;
-
-    // ===================== PULSE STATE (FAR mode feed) =====================
+    // ===================== PULSE STATE =====================
     private boolean feedPulseOn = false;
     private double feedNextToggleTime = 0.0;
     private IntakeMode lastIntakeMode = IntakeMode.OFF;
-
-    // ===================== RB2 HOLD PULSE STATE =====================
-    private boolean rbHoldPulseOn = false;
-    private double rbHoldNextToggleTime = 0.0;
 
     // ===================== RANGE MODE (CLOSE vs FAR) =====================
     private enum ShotRangeMode { CLOSE, FAR }
@@ -333,8 +321,8 @@ public class RCRedV7 extends OpMode {
 
         lastLoopTime = getRuntime();
 
-        lt.setPosition(0.1);
-        rt.setPosition(0.1);
+        lt.setPosition(0.0);
+        rt.setPosition(0.0);
         ki.setPosition(0.2);
 
         fi.setPower(0);
@@ -361,14 +349,9 @@ public class RCRedV7 extends OpMode {
         lb2WasPressed = false;
         rb2WasPressed = false;
 
-        // Pulse init (FAR feed pulse)
+        // Pulse init
         feedPulseOn = false;
         feedNextToggleTime = 0.0;
-
-        // RB2 hold pulse init
-        rbHoldPulseOn = false;
-        rbHoldNextToggleTime = 0.0;
-        preRbHoldMode = IntakeMode.OFF;
 
         // Range init
         shotRangeMode = ShotRangeMode.CLOSE;
@@ -420,9 +403,9 @@ public class RCRedV7 extends OpMode {
         rr.setPower(br);
 
         // =========================
-        // INTAKE CONTROLS (as requested)
-        // LB2: toggle slow
-        // RB2: HOLD pulse (fi/bi 1.0 on/off)
+        // INTAKE TOGGLES (as requested)
+        // LB2: first press ON slow, second press OFF
+        // RB2: first press ON shooter feed, second press OFF
         // B2 : OFF
         // =========================
         boolean lb2Now = gamepad2.left_bumper;
@@ -430,37 +413,19 @@ public class RCRedV7 extends OpMode {
         boolean b2Now  = gamepad2.b;
 
         boolean lb2Pressed = lb2Now && !lb2WasPressed;
-        lb2WasPressed = lb2Now;
+        boolean rb2Pressed = rb2Now && !rb2WasPressed;
 
-        // Track RB2 hold transitions
-        boolean rb2JustPressed  = rb2Now && !rb2WasPressed;
-        boolean rb2JustReleased = !rb2Now && rb2WasPressed;
+        lb2WasPressed = lb2Now;
         rb2WasPressed = rb2Now;
 
         if (b2Now) {
             intakeMode = IntakeMode.OFF;
-        } else if (rb2Now) {
-            // Enter/maintain HOLD PULSE mode while RB2 is held
-            if (rb2JustPressed) {
-                preRbHoldMode = intakeMode;
-
-                rbHoldPulseOn = true;
-                rbHoldNextToggleTime = now + RB_HOLD_PULSE_ON_SEC;
-            }
-            intakeMode = IntakeMode.SHOOTER_PULSE_HOLD;
-
         } else {
-            // RB2 released: restore prior mode
-            if (rb2JustReleased) {
-                intakeMode = preRbHoldMode;
-
-                rbHoldPulseOn = false;
-                rbHoldNextToggleTime = 0.0;
-            }
-
-            // LB2 toggle (only when not holding RB2)
             if (lb2Pressed) {
                 intakeMode = (intakeMode == IntakeMode.INTAKE_SLOW) ? IntakeMode.OFF : IntakeMode.INTAKE_SLOW;
+            }
+            if (rb2Pressed) {
+                intakeMode = (intakeMode == IntakeMode.SHOOTER_FULL) ? IntakeMode.OFF : IntakeMode.SHOOTER_FULL;
             }
         }
 
@@ -480,7 +445,8 @@ public class RCRedV7 extends OpMode {
         if (a2Pressed) {
             shotRangeMode = ShotRangeMode.CLOSE;
             rt.setPosition(.30);
-            shooterSetpoint = 1260;//1290
+            shooterSetpoint = 1250;//1100
+
         }
         if (y2Pressed) {
             shotRangeMode = ShotRangeMode.CLOSE;
@@ -572,12 +538,12 @@ public class RCRedV7 extends OpMode {
 
         // =========================
         // FEED APPLY
-        // - RB2 HELD: pulse fi/bi (1.0 on/off) regardless of range
-        // - FAR mode (when using SHOOTER_FULL elsewhere): pulse feed when in SHOOTER_FULL
+        // - CLOSE (A/Y): straight feed when in SHOOTER_FULL
+        // - FAR (DPAD_DOWN): pulse feed when in SHOOTER_FULL
         // - RT2 outtake overrides everything while held (BOTH motors -0.7)
         // =========================
 
-        // Reset FAR pulse when intake mode changes away from SHOOTER_FULL
+        // Reset pulse when intake mode changes away from SHOOTER_FULL
         if (lastIntakeMode != intakeMode) {
             if (intakeMode != IntakeMode.SHOOTER_FULL) {
                 feedPulseOn = false;
@@ -590,7 +556,7 @@ public class RCRedV7 extends OpMode {
             lastIntakeMode = intakeMode;
         }
 
-        // ALSO reset FAR pulse timing when switching into FAR mode (so it starts ON cleanly)
+        // ALSO reset pulse timing when switching into FAR mode (so it starts ON cleanly)
         if (lastShotRangeMode != shotRangeMode) {
             if (shotRangeMode == ShotRangeMode.FAR) {
                 feedPulseOn = true;
@@ -603,24 +569,6 @@ public class RCRedV7 extends OpMode {
             // OUTTAKE: BOTH motors -0.7 while held
             fi.setPower(-REVERSE_POWER);
             bi.setPower(-REVERSE_POWER);
-
-        } else if (intakeMode == IntakeMode.SHOOTER_PULSE_HOLD) {
-            // RB2 HELD: PULSE FEED (1.0 on/off, repeating)
-            if (rbHoldNextToggleTime <= 0.0) {
-                rbHoldPulseOn = true;
-                rbHoldNextToggleTime = now + RB_HOLD_PULSE_ON_SEC;
-            } else if (now >= rbHoldNextToggleTime) {
-                rbHoldPulseOn = !rbHoldPulseOn;
-                rbHoldNextToggleTime = now + (rbHoldPulseOn ? RB_HOLD_PULSE_ON_SEC : RB_HOLD_PULSE_OFF_SEC);
-            }
-
-            if (rbHoldPulseOn) {
-                fi.setPower(RB_HOLD_PULSE_POWER);
-                bi.setPower(RB_HOLD_PULSE_POWER);
-            } else {
-                fi.setPower(0.0);
-                bi.setPower(0.0);
-            }
 
         } else if (intakeMode == IntakeMode.INTAKE_SLOW) {
             // unchanged from your original logic
@@ -918,7 +866,6 @@ public class RCRedV7 extends OpMode {
         telemetry.addData("IntakeMode", intakeMode.toString());
         telemetry.addData("ReverseHeld(RT2)", reverseHeld);
         telemetry.addData("PulseOn(FAR only)", feedPulseOn);
-        telemetry.addData("RB2HoldPulseOn", rbHoldPulseOn);
         telemetry.addData("DipActive", dipActive);
 
         telemetry.addData("Tracking Enabled", trackingEnabled);

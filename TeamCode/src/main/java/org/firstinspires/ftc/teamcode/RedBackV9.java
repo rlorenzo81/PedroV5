@@ -21,7 +21,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Red Back V9", group = "Examples")
+@Autonomous(name = "Red Back V9.1", group = "Examples")
 public class RedBackV9 extends OpMode {
 
     // ================= HARDWARE =================
@@ -60,7 +60,7 @@ public class RedBackV9 extends OpMode {
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
     private double shootingSequenceStart = 0.0;
-    private static final double SHOOT_FEED_SEC = 1.0;
+    private static final double SHOOT_FEED_SEC = 1.6; //was 1.0
 
     // ================= SHOOTER SPIN-UP DELAY =================
     // ONLY used for FIRST shot window now
@@ -71,6 +71,13 @@ public class RedBackV9 extends OpMode {
 
     // ================= FIRST-SPINUP DONE FLAG =================
     private boolean firstSpinupDone = false;
+
+    // ================= SHOOT FEED PULSE (REQUESTED) =================
+    private static final double FEED_ON_SEC  = 0.20;
+    private static final double FEED_OFF_SEC = 0.30;
+
+    private boolean feedPulseOn = false;
+    private double feedNextToggleTime = 0.0;
 
     // ================= PAUSE (kept for reuse elsewhere) =================
     private boolean pauseActive = false;
@@ -92,29 +99,29 @@ public class RedBackV9 extends OpMode {
 
     // ================= POSES =================
     private final Pose startPose = new Pose(120, 126, Math.toRadians(45));
-    private final Pose scorePose = new Pose(93, 77, Math.toRadians(53));//89, 87
+    private final Pose scorePose = new Pose(97, 97, Math.toRadians(53));// was 93,93
 
     private final Pose toArtifactLine2 = new Pose(100, 59, Math.toRadians(0));
     private final Pose driveThroughLine2 = new Pose(142, 59, Math.toRadians(0));
-    private final Pose driveToShoot2 = new Pose(93, 77, Math.toRadians(0)); // was 53
+    private final Pose driveToShoot2 = new Pose(97, 96, Math.toRadians(0)); // was 93,93 (97)
 
-    private final Pose driveTowardsGate1= new Pose(100, 68, Math.toRadians(53)); // was 53
-    private final Pose driveToGate1= new Pose(142, 58, Math.toRadians(25)); // was 120,71 [move y back so it doesnt hit the line (10:09)]
+    private final Pose driveTowardsGate1= new Pose(95, 55, Math.toRadians(53)); // was 100,68
+    private final Pose driveToGate1= new Pose(142, 58, Math.toRadians(25)); // was 120,71
 
     // intake post
     private final Pose intakeFromGate1 = new Pose(143, 54, Math.toRadians(75));
     private final Pose intakeFromGate2 = new Pose(143, 54, Math.toRadians(75));
 
-    private final Pose driveToShoot3= new Pose(93, 77, Math.toRadians(53)); // was 53
+    private final Pose driveToShoot3= new Pose(99, 95, Math.toRadians(53)); // was 93,97
 
-    private final Pose driveTowardsGate2= new Pose(100, 71, Math.toRadians(53)); // was 53
-    private final Pose driveToGate2= new Pose(142, 58, Math.toRadians(25)); // was 127,71 [go a little more forward (10:05am)]
-    private final Pose driveToShoot4= new Pose(93, 77, Math.toRadians(53)); // was 53
+    private final Pose driveTowardsGate2= new Pose(97, 55, Math.toRadians(53)); // was 95
+    private final Pose driveToGate2= new Pose(142, 58, Math.toRadians(25)); // was 127,71
+    private final Pose driveToShoot4= new Pose(97, 92, Math.toRadians(53)); // was 93,95
 
     // ====== NEW (requested) ======
     private final Pose toArtifactLine1 = new Pose(100, 81, Math.toRadians(0));
     private final Pose driveThroughLine1 = new Pose(133, 81, Math.toRadians(0));
-    private final Pose driveToShoot5 = new Pose(93, 77, Math.toRadians(53));
+    private final Pose driveToShoot5 = new Pose(97, 97, Math.toRadians(53)); // was 93,93
     // ============================
 
     private final Pose leavePose = new Pose(115, 66, Math.toRadians(0));
@@ -139,20 +146,34 @@ public class RedBackV9 extends OpMode {
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
+        // ====== REORDER: Line1 first (Score -> Line1 -> Through Line1 -> Shoot2) ======
+        driveToLine1 = follower.pathBuilder()
+                .addPath(new BezierLine(scorePose, toArtifactLine1))
+                .setLinearHeadingInterpolation(scorePose.getHeading(), toArtifactLine1.getHeading())
+                .build();
+
+        pickUpLine1 = follower.pathBuilder()
+                .addPath(new BezierLine(toArtifactLine1, driveThroughLine1))
+                .setLinearHeadingInterpolation(toArtifactLine1.getHeading(), driveThroughLine1.getHeading())
+                .build();
+
+        goShoot2 = follower.pathBuilder()
+                .addPath(new BezierLine(driveThroughLine1, driveToShoot2))
+                .setLinearHeadingInterpolation(driveThroughLine1.getHeading(), driveToShoot2.getHeading())
+                .build();
+        // ============================================================================
+
+        // ====== REORDER: After Shoot2 -> Line2 -> Through Line2 -> then Gate1 ======
         driveToLine2 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, toArtifactLine2))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), toArtifactLine2.getHeading())
+                .addPath(new BezierLine(driveToShoot2, toArtifactLine2))
+                .setLinearHeadingInterpolation(driveToShoot2.getHeading(), toArtifactLine2.getHeading())
                 .build();
 
         pickUpLine2 = follower.pathBuilder()
                 .addPath(new BezierLine(toArtifactLine2, driveThroughLine2))
                 .setLinearHeadingInterpolation(toArtifactLine2.getHeading(), driveThroughLine2.getHeading())
                 .build();
-
-        goShoot2 = follower.pathBuilder()
-                .addPath(new BezierLine(driveThroughLine2, driveToShoot2))
-                .setLinearHeadingInterpolation(driveThroughLine2.getHeading(), driveToShoot2.getHeading())
-                .build();
+        // ==========================================================================
 
         onWaytoGate1 = follower.pathBuilder()
                 .addPath(new BezierLine(driveToShoot2, driveTowardsGate1))
@@ -164,10 +185,10 @@ public class RedBackV9 extends OpMode {
                 .setLinearHeadingInterpolation(driveTowardsGate1.getHeading(), driveToGate1.getHeading())
                 .build();
 
-        // gate1 smooth curve through driveTowardsGate1
+        // gate1 smooth curve (now starts AFTER Line2 drive-through)
         goGate1Combined = follower.pathBuilder()
-                .addPath(new BezierCurve(driveToShoot2, driveTowardsGate1, driveToGate1))
-                .setLinearHeadingInterpolation(driveToShoot2.getHeading(), driveToGate1.getHeading())
+                .addPath(new BezierCurve(driveThroughLine2, driveTowardsGate1, driveToGate1))
+                .setLinearHeadingInterpolation(driveThroughLine2.getHeading(), driveToGate1.getHeading())
                 .build();
 
         // kept (unused in new flow)
@@ -257,6 +278,10 @@ public class RedBackV9 extends OpMode {
 
         shootingSequenceActive = false;
         shootingSequenceStart = 0.0;
+
+        // reset pulse state whenever we change states (keeps shooting pulse clean)
+        feedPulseOn = false;
+        feedNextToggleTime = 0.0;
     }
 
     /** FIRST shot window (includes flywheel spinup delay). */
@@ -282,13 +307,18 @@ public class RedBackV9 extends OpMode {
             if (aimOk || timedOut) {
                 shootingSequenceActive = true;
                 shootingSequenceStart = now;
+
+                // start pulse ON immediately
+                feedPulseOn = true;
+                feedNextToggleTime = now + FEED_ON_SEC;
+
             } else {
                 intakeStop();
                 return false;
             }
         }
 
-        // NO PULSE: full bore feed for same window time
+        // PULSED FEED during shooting window
         intakeShootFeed();
         return (now - shootingSequenceStart) >= SHOOT_FEED_SEC;
     }
@@ -310,13 +340,18 @@ public class RedBackV9 extends OpMode {
             if (aimOk || timedOut) {
                 shootingSequenceActive = true;
                 shootingSequenceStart = now;
+
+                // start pulse ON immediately
+                feedPulseOn = true;
+                feedNextToggleTime = now + FEED_ON_SEC;
+
             } else {
                 intakeStop();
                 return false;
             }
         }
 
-        // NO PULSE: full bore feed for same window time
+        // PULSED FEED during shooting window
         intakeShootFeed();
         return (now - shootingSequenceStart) >= SHOOT_FEED_SEC;
     }
@@ -335,7 +370,7 @@ public class RedBackV9 extends OpMode {
                 if (!follower.isBusy()) {
                     if (runShootWindowFirst()) {
                         intakeSlow();
-                        follower.followPath(driveToLine2, true);
+                        follower.followPath(driveToLine1, true);   // Line1 first
                         setPathState(2);
                     }
                 }
@@ -344,7 +379,7 @@ public class RedBackV9 extends OpMode {
             case 2:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    follower.followPath(pickUpLine2, true);
+                    follower.followPath(pickUpLine1, true);       // DriveThroughLine1
                     setPathState(3);
                 }
                 break;
@@ -352,7 +387,7 @@ public class RedBackV9 extends OpMode {
             case 3:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    follower.followPath(goShoot2, true);
+                    follower.followPath(goShoot2, true);          // Then shoot
                     setPathState(4);
                 }
                 break;
@@ -360,30 +395,35 @@ public class RedBackV9 extends OpMode {
             case 4:
                 if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
-                        intakeStop();
-                        follower.followPath(goGate1Combined, true);
-                        setPathState(6);
+                        intakeSlow();
+                        follower.followPath(driveToLine2, true);  // Then Line2
+                        setPathState(5);
                     }
+                }
+                break;
+
+            case 5:
+                if (!follower.isBusy()) {
+                    intakeSlow();
+                    follower.followPath(pickUpLine2, true);       // DriveThroughLine2
+                    setPathState(6);
+                }
+                break;
+
+            case 6:
+                if (!follower.isBusy()) {
+                    intakeStop();
+                    follower.followPath(goGate1Combined, true);   // Then Gate1
+                    setPathState(7);
                 }
                 break;
 
             // ---- Gate 1 behavior ----
-            case 6:
+            case 7:
                 if (!follower.isBusy()) {
                     intakeSlow();
                     if (pauseTime(0.5)) {
                         follower.followPath(gate1ToIntakePost, true);
-                        setPathState(7);
-                    }
-                }
-                break;
-
-            case 7:
-                if (!follower.isBusy()) {
-                    intakeSlow();
-                    if (pauseTime(1.5)) {
-                        intakeStop();
-                        follower.followPath(intakePostToShoot3, true);
                         setPathState(8);
                     }
                 }
@@ -391,31 +431,31 @@ public class RedBackV9 extends OpMode {
 
             case 8:
                 if (!follower.isBusy()) {
-                    if (runShootWindowQuick()) {
+                    intakeSlow();
+                    if (pauseTime(1.5)) {
                         intakeStop();
-                        follower.followPath(goGate2Combined, true);
+                        follower.followPath(intakePostToShoot3, true);
                         setPathState(9);
                     }
                 }
                 break;
 
-            // ---- Gate 2 behavior ----
             case 9:
                 if (!follower.isBusy()) {
-                    intakeSlow();
-                    if (pauseTime(0.5)) {
-                        follower.followPath(gate2ToIntakePost, true);
+                    if (runShootWindowQuick()) {
+                        intakeStop();
+                        follower.followPath(goGate2Combined, true);
                         setPathState(10);
                     }
                 }
                 break;
 
+            // ---- Gate 2 behavior ----
             case 10:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(1.5)) {
-                        intakeStop();
-                        follower.followPath(intakePostToShoot4, true);
+                    if (pauseTime(0.5)) {
+                        follower.followPath(gate2ToIntakePost, true);
                         setPathState(11);
                     }
                 }
@@ -423,47 +463,58 @@ public class RedBackV9 extends OpMode {
 
             case 11:
                 if (!follower.isBusy()) {
+                    intakeSlow();
+                    if (pauseTime(1.5)) {
+                        intakeStop();
+                        follower.followPath(intakePostToShoot4, true);
+                        setPathState(12);
+                    }
+                }
+                break;
+
+            case 12:
+                if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
                         // ====== ONLY CHANGE STARTS HERE (requested addition) ======
                         intakeSlow();
                         follower.followPath(shoot4ToLine1, true);
-                        setPathState(12);
+                        setPathState(13);
                         // =========================================================
                     }
                 }
                 break;
 
             // ====== NEW (requested) ======
-            case 12:
+            case 13:
                 if (!follower.isBusy()) {
                     // Drive through Line1 with slow intake (same style as Line2)
                     intakeSlow();
                     follower.followPath(line1DriveThrough, true);
-                    setPathState(13);
-                }
-                break;
-
-            case 13:
-                if (!follower.isBusy()) {
-                    // After pickup, stop intake and go to Shoot5
-                    intakeStop();
-                    follower.followPath(line1ToShoot5, true);
                     setPathState(14);
                 }
                 break;
 
             case 14:
                 if (!follower.isBusy()) {
-                    // Shoot5
-                    if (runShootWindowQuick()) {
-                        intakeStop();
-                        follower.followPath(leaveOutChain, true);
-                        setPathState(15);
-                    }
+                    // After pickup, stop intake and go to Shoot5
+                    intakeStop();
+                    follower.followPath(line1ToShoot5, true);
+                    setPathState(15);
                 }
                 break;
 
             case 15:
+                if (!follower.isBusy()) {
+                    // Shoot5
+                    if (runShootWindowQuick()) {
+                        intakeStop();
+                        follower.followPath(leaveOutChain, true);
+                        setPathState(16);
+                    }
+                }
+                break;
+
+            case 16:
                 if (!follower.isBusy()) {
                     intakeStop();
                     setPathState(-1);
@@ -476,8 +527,8 @@ public class RedBackV9 extends OpMode {
         }
     }
 
-    // ================= SHOOTER: KICK -> PIDF =================
-    private SpinUpFastKickThenPIDF spinup;
+    // ================= SHOOTER: REPLACED WITH RED v7 RAMP-VELOCITY SPINUP =================
+    private SpinUpRampVelocity spinup;
     private boolean shooterSpinupStarted = false;
 
     // ================= LOOP =================
@@ -489,15 +540,12 @@ public class RedBackV9 extends OpMode {
         lastLoopTime = now;
         if (dt < 0.001) dt = 0.001;
 
-        // Shooter always on (kick -> PIDF)
+        // Shooter always on (RAMP VELOCITY ONLY)
         if (!shooterSpinupStarted) {
-            spinup.kickMs = 1800;
-            spinup.kickPower = 1.0;
-            spinup.earlyTakeoverPct = 0.98;
-            spinup.start(1240);//1280
+            spinup.start(1165, now); //1260
             shooterSpinupStarted = true;
         }
-        spinup.update();
+        spinup.update(now);
 
         autonomousPathUpdate();
         follower.update();
@@ -546,7 +594,8 @@ public class RedBackV9 extends OpMode {
             shooter.setVelocityPIDFCoefficients(SHOOTER_KP, SHOOTER_KI, SHOOTER_KD, SHOOTER_KF);
         } catch (Exception ignored) {}
 
-        spinup = new SpinUpFastKickThenPIDF(shooter);
+        // NEW: ramp-velocity spinup (matches RED v7 logic)
+        spinup = new SpinUpRampVelocity(shooter);
         shooterSpinupStarted = false;
 
         lt = hardwareMap.get(Servo.class, "lt");
@@ -593,10 +642,25 @@ public class RedBackV9 extends OpMode {
         bi.setPower(-0.65);
     }
 
-    /** NO PULSE: just run full bore whenever called. */
+    /** PULSED feed: ON for FEED_ON_SEC, OFF for FEED_OFF_SEC while called. */
     private void intakeShootFeed() {
-        fi.setPower(1.0);
-        bi.setPower(1.0);
+        double now = getRuntime();
+
+        if (feedNextToggleTime <= 0.0) {
+            feedPulseOn = true;
+            feedNextToggleTime = now + FEED_ON_SEC;
+        } else if (now >= feedNextToggleTime) {
+            feedPulseOn = !feedPulseOn;
+            feedNextToggleTime = now + (feedPulseOn ? FEED_ON_SEC : FEED_OFF_SEC);
+        }
+
+        if (feedPulseOn) {
+            fi.setPower(1.0);
+            bi.setPower(1.0);
+        } else {
+            fi.setPower(0.0);
+            bi.setPower(0.0);
+        }
     }
 
     private void intakeStop() {
@@ -605,54 +669,68 @@ public class RedBackV9 extends OpMode {
     }
 
     // ================= SHOOTER (REPLACEMENT HELPERS) =================
-    public static class SpinUpFastKickThenPIDF {
+    // Matches the RED v7 "SpinUpRampVelocity" approach: velocity ramp only, no raw kick.
+    public static class SpinUpRampVelocity {
 
-        public long kickMs = 1800;
-        public double kickPower = 1.0;
-        public double earlyTakeoverPct = 0.95;
-        public long maxTotalMs = 3000;
+        public double rampSec = 0.50;     // tune if needed
+        public double minRampSec = 0.12;  // safety
+        public double maxRampSec = 1.50;  // safety
 
         private boolean active = false;
-        private long startMs = 0;
-        private double targetTicksPerSec = 0;
+        private double startTime = 0.0;   // OpMode runtime seconds
+        private double targetVel = 0.0;
+
+        private double startVel = 0.0;
+        private double cmdVel = 0.0;
 
         private final DcMotorEx shooter;
 
-        public SpinUpFastKickThenPIDF(DcMotorEx shooterMotor) {
+        public SpinUpRampVelocity(DcMotorEx shooterMotor) {
             this.shooter = shooterMotor;
         }
 
-        public void start(double targetTicksPerSec) {
-            this.targetTicksPerSec = targetTicksPerSec;
-            this.startMs = System.currentTimeMillis();
+        public void start(double targetTicksPerSec, double nowSec) {
+            this.targetVel = targetTicksPerSec;
+            this.startTime = nowSec;
             this.active = true;
 
-            shooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            shooter.setPower(kickPower);
+            shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            startVel = Math.max(0.0, shooter.getVelocity());
+            cmdVel = startVel;
+            shooter.setVelocity(cmdVel);
         }
 
-        public void update() {
+        public void update(double nowSec) {
             if (!active) return;
 
-            long elapsed = System.currentTimeMillis() - startMs;
-            double vel = shooter.getVelocity();
+            double r = clip(rampSec, minRampSec, maxRampSec);
+            double elapsed = nowSec - startTime;
 
-            boolean timeUp = elapsed >= kickMs;
-            boolean closeEnough = vel >= targetTicksPerSec * earlyTakeoverPct;
-            boolean safetyUp = elapsed >= maxTotalMs;
+            double t = clip(elapsed / r, 0.0, 1.0);
+            cmdVel = lerp(startVel, targetVel, t);
 
-            if (timeUp || closeEnough || safetyUp) {
-                shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                shooter.setVelocity(targetTicksPerSec);
+            shooter.setVelocity(cmdVel);
+
+            if (t >= 1.0) {
+                cmdVel = targetVel;
+                shooter.setVelocity(cmdVel);
                 active = false;
-            } else {
-                shooter.setPower(kickPower);
             }
+        }
+
+        public void stop() {
+            active = false;
+            cmdVel = 0.0;
         }
     }
 
     private static double clip(double v, double lo, double hi) {
         return Math.max(lo, Math.min(hi, v));
+    }
+
+    private static double lerp(double a, double b, double t) {
+        return a + (b - a) * t;
     }
 
     // ================= TURRET TRACKER =================
