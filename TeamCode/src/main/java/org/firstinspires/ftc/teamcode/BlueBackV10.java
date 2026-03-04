@@ -38,7 +38,7 @@ public class BlueBackV10 extends OpMode {
     private double stateStartTime = 0.0;
 
     // RCRed-style target variable (ticks/sec). Change this value to change flywheel velocity.
-    double target = 1250.0; // change if needed
+    double target = 1190.0; // change if needed was 1250
 
     // ================= TURRET =================
     private final TurretTracker turret = new TurretTracker();
@@ -54,7 +54,7 @@ public class BlueBackV10 extends OpMode {
     private static final double SPEED_FULL_BLEND = 40.0;
 
     // ================= SCORE WINDOW (AIM TIMEOUT) =================
-    private static final double AIM_TIMEOUT_SEC = 0.35;
+    private static final double AIM_TIMEOUT_SEC = 0.5;
 
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
@@ -66,7 +66,7 @@ public class BlueBackV10 extends OpMode {
     private static final double SHOOTER_SPINUP_SEC = 2.0; //was 2.0 (how long the robot has to speed up to shoot)
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
-    private static final double SHOOT_SETTLE_SEC = 1.0; //was 0.4
+    private static final double SHOOT_SETTLE_SEC = 0.5; //was 0.4
 
     // ================= FIRST-SPINUP DONE FLAG =================
     private boolean firstSpinupDone = false;
@@ -99,7 +99,7 @@ public class BlueBackV10 extends OpMode {
     // ================= POSES =================
 
     private final Pose startPose = new Pose(24, 126, Math.toRadians(135));
-    private final Pose scorePose = new Pose(45, 84, Math.toRadians(127));// was 93,93
+    private final Pose scorePose = new Pose(43, 86, Math.toRadians(127));// was 45, 84
 
     // ====== Line1 pickup + exit curve ======
     private final Pose toArtifactLine1 = new Pose(44, 82, Math.toRadians(180)); //y was 84
@@ -113,13 +113,13 @@ public class BlueBackV10 extends OpMode {
 
     private final Pose toArtifactLine2 = new Pose(44, 58, Math.toRadians(180));//y was 60
     private final Pose driveThroughLine2 = new Pose(3, 58, Math.toRadians(180));//x was 5
-    private final Pose driveToShoot2 = new Pose(45, 84, Math.toRadians(127)); // was 93,93 (97)
+    private final Pose driveToShoot2 = new Pose(43, 86, Math.toRadians(127)); // was 93,93 (97)
 
     private final Pose driveTowardsGate1= new Pose(49, 53, Math.toRadians(127)); // was 100,68
-    private final Pose driveToGate1= new Pose(5, 60, Math.toRadians(155)); // was 120,71
+    private final Pose driveToGate1= new Pose(5, 58, Math.toRadians(155)); // was 120,71
 
     // intake post
-    private final Pose intakeFromGate1 = new Pose(2, 52, Math.toRadians(105)); //y was 54
+    private final Pose intakeFromGate1 = new Pose(2, 50, Math.toRadians(105)); //y was 54
     private final Pose intakeFromGate2 = new Pose(1, 56, Math.toRadians(105));
 
     private final Pose driveToShoot3= new Pose(52, 77, Math.toRadians(127)); // was 93,97
@@ -631,11 +631,11 @@ public class BlueBackV10 extends OpMode {
         private static final int TX_SIGN = 1;
         private static final int LEAD_SIGN = 1;
 
-        private static final double KP = 0.045;
+        private static final double KP = 0.050; //was0.045 changed
         private static final double KD = 0.003;
 
         private static final double FF = 0.012;
-        private static final double LEAD_TIME = 0.03;
+        private static final double LEAD_TIME = 0.05; // rl was 0.03
 
         private static final double AIM_TOL = 2.5;
         private static final double AIM_PWR_TOL = 0.12;
