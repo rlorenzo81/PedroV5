@@ -67,7 +67,7 @@ public class RedBackV9 extends OpMode {
     private static final double SHOOTER_SPINUP_SEC = 2.0; //was 2.0
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
-    private static final double SHOOT_SETTLE_SEC = 0.20;
+    private static final double SHOOT_SETTLE_SEC = 1.0; //was 0.7
 
     // ================= FIRST-SPINUP DONE FLAG =================
     private boolean firstSpinupDone = false;
@@ -102,11 +102,11 @@ public class RedBackV9 extends OpMode {
     private final Pose scorePose = new Pose(97, 97, Math.toRadians(53));// was 93,93
 
     private final Pose toArtifactLine2 = new Pose(100, 59, Math.toRadians(0));
-    private final Pose driveThroughLine2 = new Pose(142, 59, Math.toRadians(0));
+    private final Pose driveThroughLine2 = new Pose(144, 59, Math.toRadians(0));
     private final Pose driveToShoot2 = new Pose(97, 96, Math.toRadians(0)); // was 93,93 (97)
 
-    private final Pose driveTowardsGate1= new Pose(95, 55, Math.toRadians(53)); // was 100,68
-    private final Pose driveToGate1= new Pose(142, 58, Math.toRadians(25)); // was 120,71
+    private final Pose driveTowardsGate1= new Pose(96, 55, Math.toRadians(53)); // was 100,68
+    private final Pose driveToGate1= new Pose(142, 62, Math.toRadians(25)); // was 120,71
 
     // intake post
     private final Pose intakeFromGate1 = new Pose(143, 54, Math.toRadians(75));
@@ -115,7 +115,7 @@ public class RedBackV9 extends OpMode {
     private final Pose driveToShoot3= new Pose(99, 95, Math.toRadians(53)); // was 93,97
 
     private final Pose driveTowardsGate2= new Pose(97, 55, Math.toRadians(53)); // was 95
-    private final Pose driveToGate2= new Pose(142, 58, Math.toRadians(25)); // was 127,71
+    private final Pose driveToGate2= new Pose(141, 59, Math.toRadians(25)); // was 127,71
     private final Pose driveToShoot4= new Pose(97, 92, Math.toRadians(53)); // was 93,95
 
     // ====== Line1 pickup + exit curve ======
@@ -123,7 +123,7 @@ public class RedBackV9 extends OpMode {
     private final Pose driveThroughLine1 = new Pose(133, 81, Math.toRadians(0));
 
     private final Pose line1ExitMid  = new Pose(127, 81, Math.toRadians(0));
-    private final Pose line1ExitEnd  = new Pose(134, 77, Math.toRadians(0));
+    private final Pose line1ExitEnd  = new Pose(134, 75, Math.toRadians(0));
 
     // ====== NEW (requested) midpoint for pickUpLine2 -> goShoot3 curve ======
     private final Pose line2ToShoot3Mid = new Pose(130, 58, Math.toRadians(0));
@@ -511,7 +511,7 @@ public class RedBackV9 extends OpMode {
 
         // Shooter always on (RAMP VELOCITY ONLY)
         if (!shooterSpinupStarted) {
-            spinup.start(1145, now); //1260
+            spinup.start(1173, now); //1260+
             shooterSpinupStarted = true;
         }
         spinup.update(now);
@@ -572,7 +572,7 @@ public class RedBackV9 extends OpMode {
         ki = hardwareMap.get(Servo.class, "ki");
 
         lt.setPosition(0.3);
-        rt.setPosition(0.3);
+        rt.setPosition(1.0);
         ki.setPosition(0.2);
 
         turret.init(hardwareMap);

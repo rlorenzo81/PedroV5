@@ -18,7 +18,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
-@TeleOp(name="RED v7 RangePulse+FarOffset", group="Robot")
+@TeleOp(name="RC RED", group="Robot")
 public class RCRedV7 extends OpMode {
 
     // ----------------- DRIVE -----------------
@@ -172,7 +172,7 @@ public class RCRedV7 extends OpMode {
     private static final double TRIGGER_DEADBAND = 0.10;
 
     // ===================== FAR TURRET OFFSET (ONLY WHEN DPAD_DOWN FAR MODE) =====================
-    private static final double FAR_TURRET_TX_OFFSET_DEG = 0.0; // <-- CHANGE THIS
+    private static final double FAR_TURRET_TX_OFFSET_DEG = 3.0; // <-- CHANGE THIS
 
     // ===================== NEW SHOOTER SPINUP: VELOCITY RAMP (NO RAW POWER / NO VOLT COMP) =====================
     private static final double RAMP_SEC_CLOSE = 0.40; // start here after weight removal
@@ -334,7 +334,7 @@ public class RCRedV7 extends OpMode {
         lastLoopTime = getRuntime();
 
         lt.setPosition(0.1);
-        rt.setPosition(0.1);
+        rt.setPosition(1);
         ki.setPosition(0.2);
 
         fi.setPower(0);
@@ -471,7 +471,7 @@ public class RCRedV7 extends OpMode {
         // =========================
         boolean a2Now = gamepad2.a;
         boolean y2Now = gamepad2.y;
-        boolean dDownNow = gamepad2.dpad_down;
+        boolean dDownNow = gamepad1.x;
 
         boolean a2Pressed = a2Now && !a2WasPressed;
         boolean y2Pressed = y2Now && !y2WasPressed;
@@ -479,19 +479,19 @@ public class RCRedV7 extends OpMode {
 
         if (a2Pressed) {
             shotRangeMode = ShotRangeMode.CLOSE;
-            rt.setPosition(.30);
+            rt.setPosition(1.0);
             shooterSetpoint = 1260;//1290
         }
         if (y2Pressed) {
             shotRangeMode = ShotRangeMode.CLOSE;
             shooterSetpoint = 1150; //1100
-            rt.setPosition(0.3);
+            rt.setPosition(0.7);
         }
 
         if (ddownPressed) {
             shotRangeMode = ShotRangeMode.FAR;
-            shooterSetpoint = 1640; //1650/1600 range
-            rt.setPosition(0.1);
+            shooterSetpoint = 1630; //1650/1600 range
+            rt.setPosition(1.0);
         }
 
         a2WasPressed = a2Now;
@@ -616,7 +616,8 @@ public class RCRedV7 extends OpMode {
 
             if (rbHoldPulseOn) {
                 fi.setPower(RB_HOLD_PULSE_POWER);
-                bi.setPower(RB_HOLD_PULSE_POWER);
+               // bi.setPower(RB_HOLD_PULSE_POWER);
+                bi.setPower(0);
             } else {
                 fi.setPower(0.0);
                 bi.setPower(0.0);
@@ -625,14 +626,14 @@ public class RCRedV7 extends OpMode {
         } else if (intakeMode == IntakeMode.INTAKE_SLOW) {
             // unchanged from your original logic
             fi.setPower(1.0);
-            bi.setPower(-0.65);
+          //  bi.setPower(-0.65);
 
         } else if (intakeMode == IntakeMode.SHOOTER_FULL) {
 
             if (!shooterOn) {
                 // If flywheel is off, just run continuous feed (same as before)
                 fi.setPower(1.0);
-                bi.setPower(1.0);
+              //  bi.setPower(1.0);
 
                 // keep pulse state primed
                 feedPulseOn = true;

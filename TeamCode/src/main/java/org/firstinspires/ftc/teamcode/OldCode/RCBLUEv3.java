@@ -274,7 +274,7 @@ public class RCBLUEv3 extends OpMode {
         lastLoopTime = getRuntime();
 
         lt.setPosition(0.35);
-        rt.setPosition(0.35);
+        rt.setPosition(0.75);
         ki.setPosition(0.2);
 
         fi.setPower(0);
@@ -366,13 +366,13 @@ public class RCBLUEv3 extends OpMode {
 
         if (a2Pressed) {
             // lt.setPosition(.8);//not use
-            rt.setPosition(.35);
+            rt.setPosition(.75);
             shooterSetpoint = 1500;
         }
         if (y2Pressed) {
             shooterSetpoint = 1600;
             // lt.setPosition(.6);//not used
-            rt.setPosition(0.0);
+            rt.setPosition(1);
         }
 
         a2WasPressed = a2Now;
