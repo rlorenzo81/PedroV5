@@ -38,7 +38,7 @@ public class BlueBackV10 extends OpMode {
     private double stateStartTime = 0.0;
 
     // RCRed-style target variable (ticks/sec). Change this value to change flywheel velocity.
-    double target = 1190.0; // change if needed was 1250
+    double target = 1150.0; // change if needed was 1250
 
     // ================= TURRET =================
     private final TurretTracker turret = new TurretTracker();
@@ -54,7 +54,7 @@ public class BlueBackV10 extends OpMode {
     private static final double SPEED_FULL_BLEND = 40.0;
 
     // ================= SCORE WINDOW (AIM TIMEOUT) =================
-    private static final double AIM_TIMEOUT_SEC = 0.5;
+    private static final double AIM_TIMEOUT_SEC = 1.0; //was 0.5
 
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
@@ -66,7 +66,7 @@ public class BlueBackV10 extends OpMode {
     private static final double SHOOTER_SPINUP_SEC = 2.0; //was 2.0 (how long the robot has to speed up to shoot)
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
-    private static final double SHOOT_SETTLE_SEC = 0.5; //was 0.4
+    private static final double SHOOT_SETTLE_SEC = 1.0; //was 0.5
 
     // ================= FIRST-SPINUP DONE FLAG =================
     private boolean firstSpinupDone = false;
@@ -116,20 +116,20 @@ public class BlueBackV10 extends OpMode {
     private final Pose driveToShoot2 = new Pose(43, 86, Math.toRadians(127)); // was 93,93 (97)
 
     private final Pose driveTowardsGate1= new Pose(49, 53, Math.toRadians(127)); // was 100,68
-    private final Pose driveToGate1= new Pose(5, 58, Math.toRadians(155)); // was 120,71
+    private final Pose driveToGate1= new Pose(4, 58, Math.toRadians(155)); // was 5
 
     // intake post
-    private final Pose intakeFromGate1 = new Pose(2, 50, Math.toRadians(105)); //y was 54
-    private final Pose intakeFromGate2 = new Pose(1, 56, Math.toRadians(105));
+    private final Pose intakeFromGate1 = new Pose(3, 50, Math.toRadians(105)); //was 2
+    private final Pose intakeFromGate2 = new Pose(2, 56, Math.toRadians(105)); //was 1
 
-    private final Pose driveToShoot3= new Pose(52, 77, Math.toRadians(127)); // was 93,97
+    private final Pose driveToShoot3= new Pose(43, 86, Math.toRadians(127)); // was 93,97
 
-    private final Pose driveTowardsGate2= new Pose(30, 67, Math.toRadians(127)); // was 95
-    private final Pose driveToGate2= new Pose(7, 60, Math.toRadians(155)); // was 2,71
-    private final Pose driveToShoot4= new Pose(50, 79, Math.toRadians(127)); // was 93,95
+    private final Pose driveTowardsGate2= new Pose(30, 65, Math.toRadians(127)); // was 95
+    private final Pose driveToGate2= new Pose(4, 58, Math.toRadians(155)); // was 2,71
+    private final Pose driveToShoot4= new Pose(43, 86, Math.toRadians(127)); // was 93,95
 
     // (kept but unused in this flow)
-    private final Pose driveToShoot5 = new Pose(97, 47, Math.toRadians(-53)); // was 93,93
+    private final Pose driveToShoot5 = new Pose(43, 86, Math.toRadians(-53)); // was 93,93
 
     private final Pose leavePose = new Pose(35, 76, Math.toRadians(0));
 
@@ -408,7 +408,8 @@ public class BlueBackV10 extends OpMode {
                     // requirement: when it gets to the last point, shut intake off, then goShoot2
                     intakeStop();
                     follower.followPath(goShoot2, true);
-                    setPathState(5);
+                    setPathState(5)
+                    ;
                 }
                 break;
 
@@ -454,7 +455,7 @@ public class BlueBackV10 extends OpMode {
             case 9:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.5)) {
+                    if (pauseTime(1.5)) { //was 0.5
                         follower.followPath(gate2ToIntakePost, true);
                         setPathState(10);
                     }
@@ -558,7 +559,7 @@ public class BlueBackV10 extends OpMode {
         rt = hardwareMap.get(Servo.class, "rt");
         ki = hardwareMap.get(Servo.class, "ki");
 
-        rt.setPosition(0.8);
+        rt.setPosition(1.0); //was 0.9
         ki.setPosition(0.2);
 
         turret.init(hardwareMap);

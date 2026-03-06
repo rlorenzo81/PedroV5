@@ -470,12 +470,12 @@ public class RCREDV8NoPulse extends OpMode {
         if (y2Pressed) {
             shotRangeMode = ShotRangeMode.CLOSE;
             shooterSetpoint = 1150; //1100
-            rt.setPosition(0.7);
+            rt.setPosition(0.9); //was .7
         }
 
         if (ddownPressed) {
             shotRangeMode = ShotRangeMode.FAR;
-            shooterSetpoint = 1630; //1650/1600 range
+            shooterSetpoint = 1590; //1650/1600 range
             rt.setPosition(1.0);
         }
 
