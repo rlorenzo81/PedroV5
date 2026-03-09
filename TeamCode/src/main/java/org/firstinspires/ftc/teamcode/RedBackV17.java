@@ -36,7 +36,7 @@ public class RedBackV17 extends OpMode {
     private double stateStartTime = 0.0;
 
     // RCRed-style target variable (ticks/sec). Change this value to change flywheel velocity.
-    double target = 1115.0; // change if needed was 1150 working good but some bounce outr
+    double target = 1124.0; // change if needed was 1150 working good but some bounce outr
 
     // ================= TURRET =================
     private final TurretTracker turret = new TurretTracker();
@@ -52,7 +52,7 @@ public class RedBackV17 extends OpMode {
     private static final double SPEED_FULL_BLEND = 40.0;
 
     // ================= SCORE WINDOW (AIM TIMEOUT) =================
-    private static final double AIM_TIMEOUT_SEC = 0.75; //was 0.5
+    private static final double AIM_TIMEOUT_SEC = 0.5; //was 0.5
 
     private static final int TURRET_OFFSET_TICKS = 0; // adjust this number
 
@@ -66,7 +66,7 @@ public class RedBackV17 extends OpMode {
     private static final double SHOOTER_SPINUP_SEC = 1.25; //was 2.0 (how long the robot has to speed up to shoot) changed
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
-    private static final double SHOOT_SETTLE_SEC = 1.0; //was 1.0 changed
+    private static final double SHOOT_SETTLE_SEC = 0.5; //was 1.0 changed
 
     // ================= FIRST-SPINUP DONE FLAG =================
     private boolean firstSpinupDone = false;
@@ -99,28 +99,28 @@ public class RedBackV17 extends OpMode {
     // ================= POSES =================
 
     private final Pose startPose = new Pose(120, 126, Math.toRadians(45)); //done was 62, angle was 45
-    private final Pose scorePose = new Pose(98, 97, Math.toRadians(45));// was 45, 84 done
+    private final Pose scorePose = new Pose(98, 97, Math.toRadians(41));// was 45, 84 done angle was 42
 
     // ====== Line1 pickup + exit curve ======
     private final Pose toArtifactLine1 = new Pose(100, 81, Math.toRadians(0)); //y was 84 done
-    private final Pose driveThroughLine1 = new Pose(133, 81, Math.toRadians(0)); //y was 84 done
+    private final Pose driveThroughLine1 = new Pose(130, 81, Math.toRadians(0)); //y was 84 done
 
     private final Pose line1TowardsGate  = new Pose(127, 81, Math.toRadians(0)); //done
     private final Pose line1PressGate = new Pose(134, 75, Math.toRadians(0)); //done
-    private final Pose driveToShoot2 = new Pose(98, 97, Math.toRadians(45)); // was 93,93 (97) done
-    private final Pose toArtifactLine2 = new Pose(100, 59, Math.toRadians(0));//y was 60 done
-    private final Pose driveThroughLine2 = new Pose(144, 59, Math.toRadians(0));//x was 5 done
+    private final Pose driveToShoot2 = new Pose(107, 97, Math.toRadians(41)); // was 93,93 (97) done.
+    private final Pose toArtifactLine2 = new Pose(100, 58, Math.toRadians(0));//y was 60 done
+    private final Pose driveThroughLine2 = new Pose(142, 58, Math.toRadians(0));//x was 5 done
 
     private final Pose line2ToShoot3Mid = new Pose(130, 40, Math.toRadians(53)); //done
 
-    private final Pose driveToShoot3= new Pose(98, 97, Math.toRadians(45)); // was 93,97 done
-    private final Pose driveTowardsGate1= new Pose(110, 55, Math.toRadians(25)); // was 95 done
+    private final Pose driveToShoot3= new Pose(107, 97, Math.toRadians(40.5)); // was 93,97 done
+    private final Pose driveTowardsGate1= new Pose(117, 55, Math.toRadians(25)); // was 95 done
 
     private final Pose driveToGate1= new Pose(138, 58, Math.toRadians(25)); // y was 62
 
     private final Pose intakeFromGate1 = new Pose(143, 51, Math.toRadians(75)); //y was 54, angle was 105 done
 
-    private final Pose driveToShoot4= new Pose(95, 97, Math.toRadians(45)); // was 93,95 done
+    private final Pose driveToShoot4= new Pose(105, 97, Math.toRadians(41)); // was 93,95 done
 
     private final Pose driveTowardsGate2= new Pose(110, 55, Math.toRadians(25)); // was 95 done
 
@@ -129,7 +129,7 @@ public class RedBackV17 extends OpMode {
     private final Pose intakeFromGate2 = new Pose(143, 54, Math.toRadians(75)); //angle was 105 done
 
     // (kept but unused in this flow)
-    private final Pose driveToShoot5 = new Pose(95, 97, Math.toRadians(45)); // was 93,93
+    private final Pose driveToShoot5 = new Pose(105, 97, Math.toRadians(41)); // was 93,93
 
     private final Pose leavePose = new Pose(115, 66, Math.toRadians(0));
 
@@ -410,7 +410,7 @@ public class RedBackV17 extends OpMode {
             case 9:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.75)) { //was 0.5
+                    if (pauseTime(0.4)) { //was 0.5
                         follower.followPath(gate1ToIntake, true);
                         setPathState(10);
                     }
@@ -420,8 +420,8 @@ public class RedBackV17 extends OpMode {
             case 10:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.4)) {
-                        intakeStop();
+                    if (pauseTime(0.3)) {
+                        intakeSlow();
                         follower.followPath(gate1IntakeToShoot4, true);
                         setPathState(11);
                     }
@@ -432,7 +432,7 @@ public class RedBackV17 extends OpMode {
             case 11:
                 if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
-                        intakeStop();
+                        intakeSlow();
                         follower.followPath(goGate2Combined, true);
                         setPathState(12);
                     }
@@ -442,7 +442,7 @@ public class RedBackV17 extends OpMode {
             case 12:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.75)) {
+                    if (pauseTime(0.4)) {
                         follower.followPath(gate2ToIntake, true);
                         setPathState(13);
                     }
@@ -452,8 +452,8 @@ public class RedBackV17 extends OpMode {
             case 13:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.40)) {
-                        intakeStop();
+                    if (pauseTime(0.30)) {
+                        intakeSlow();
                         follower.followPath(gate2IntakeToShoot5, true);
                         setPathState(14);
                     }
