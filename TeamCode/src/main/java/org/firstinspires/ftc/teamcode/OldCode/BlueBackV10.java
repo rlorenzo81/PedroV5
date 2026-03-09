@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.OldCode;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
@@ -7,11 +7,14 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -21,8 +24,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Blue Back V11 Better Tracking", group = "Examples")
-public class BlueBackV11BetterTracking extends OpMode {
+@Autonomous(name = "Blue Back V10", group = "Examples")
+@Disabled
+public class BlueBackV10 extends OpMode {
 
     // ================= HARDWARE =================
     private DcMotor fi, bi;
@@ -114,7 +118,7 @@ public class BlueBackV11BetterTracking extends OpMode {
     private final Pose driveToShoot2 = new Pose(43, 86, Math.toRadians(127)); // was 93,93 (97)
 
     private final Pose driveTowardsGate1= new Pose(49, 53, Math.toRadians(127)); // was 100,68
-    private final Pose driveToGate1= new Pose(3, 58, Math.toRadians(155)); // was 5
+    private final Pose driveToGate1= new Pose(4, 58, Math.toRadians(155)); // was 5
 
     // intake post
     private final Pose intakeFromGate1 = new Pose(3, 50, Math.toRadians(105)); //was 2
@@ -630,11 +634,11 @@ public class BlueBackV11BetterTracking extends OpMode {
         private static final int TX_SIGN = 1;
         private static final int LEAD_SIGN = 1;
 
-        private static final double KP = 0.055; //was0.045 changed
-        private static final double KD = 0.004;
+        private static final double KP = 0.050; //was0.045 changed
+        private static final double KD = 0.003;
 
         private static final double FF = 0.012;
-        private static final double LEAD_TIME = 0.06; // rl was 0.03
+        private static final double LEAD_TIME = 0.05; // rl was 0.03
 
         private static final double AIM_TOL = 2.5;
         private static final double AIM_PWR_TOL = 0.12;
@@ -699,7 +703,7 @@ public class BlueBackV11BetterTracking extends OpMode {
 
             double power = p + d + ff;
 
-            double brake = clip(errAbs / 5.5, 0.25, 1.0);
+            double brake = clip(errAbs / 6.0, 0.25, 1.0);
             power *= brake;
 
             power = clip(power, -0.75, 0.75);

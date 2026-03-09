@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="TeamCode">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-03-06T17:16:27.628106819Z">
+        <DropdownSelection timestamp="2026-03-09T18:06:00.277280331Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/home/rlorenzo@essextech.org/.android/avd/Medium_Phone.avd" />
+              <DeviceId pluginId="Default" identifier="serial=192.168.43.1:5555;connection=4d201b65" />
             </handle>
           </Target>
         </DropdownSelection>

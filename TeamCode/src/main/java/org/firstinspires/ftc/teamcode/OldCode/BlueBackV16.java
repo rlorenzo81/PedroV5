@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.OldCode;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
@@ -22,9 +22,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Red Back V10", group = "Examples")
+@Autonomous(name = "Blue Back V16", group = "Examples")
 @Disabled
-public class RedBackV10 extends OpMode {
+public class BlueBackV16 extends OpMode {
 
     // ================= HARDWARE =================
     private DcMotor fi, bi;
@@ -38,7 +38,7 @@ public class RedBackV10 extends OpMode {
     private double stateStartTime = 0.0;
 
     // RCRed-style target variable (ticks/sec). Change this value to change flywheel velocity.
-    double target = 1150.0; // change if needed was 1190 [SPEED CHANGE THIS]
+    double target = 1150.0; // change if needed was 1250
 
     // ================= TURRET =================
     private final TurretTracker turret = new TurretTracker();
@@ -54,19 +54,19 @@ public class RedBackV10 extends OpMode {
     private static final double SPEED_FULL_BLEND = 40.0;
 
     // ================= SCORE WINDOW (AIM TIMEOUT) =================
-    private static final double AIM_TIMEOUT_SEC = 1.0;//was0.5
+    private static final double AIM_TIMEOUT_SEC = 0.75; //was 0.5
 
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
     private double shootingSequenceStart = 0.0;
-    private static final double SHOOT_FEED_SEC = 1.6; //was 1.0 (how long the robot shoots)
+    private static final double SHOOT_FEED_SEC = 1.3; //was 1.6 changed
 
     // ================= SHOOTER SPIN-UP DELAY =================
     // ONLY used for FIRST shot window now
-    private static final double SHOOTER_SPINUP_SEC = 2.0; //was 2.0 (how long the robot has to speed up to shoot)
+    private static final double SHOOTER_SPINUP_SEC = 1.25; //was 2.0 (how long the robot has to speed up to shoot) changed
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
-    private static final double SHOOT_SETTLE_SEC = 1.0; //was 0.5
+    private static final double SHOOT_SETTLE_SEC = 1.0; //was 1.0 changed
 
     // ================= FIRST-SPINUP DONE FLAG =================
     private boolean firstSpinupDone = false;
@@ -98,45 +98,44 @@ public class RedBackV10 extends OpMode {
 
     // ================= POSES =================
 
-    private final Pose startPose = new Pose(120, 126, Math.toRadians(45));
-    private final Pose scorePose = new Pose(97, 97, Math.toRadians(53));// was 45, 84
+    private final Pose startPose = new Pose(24, 126, Math.toRadians(135));
+    private final Pose scorePose = new Pose(43, 86, Math.toRadians(127));// was 45, 84
 
     // ====== Line1 pickup + exit curve ======
-    private final Pose toArtifactLine1 = new Pose(100, 81, Math.toRadians(0)); //y was 84
-    private final Pose driveThroughLine1 = new Pose(133, 81, Math.toRadians(0)); //y was 84
+    private final Pose toArtifactLine1 = new Pose(44, 82, Math.toRadians(180)); //y was 84
+    private final Pose driveThroughLine1 = new Pose(12, 82, Math.toRadians(180)); //y was 84
 
-    private final Pose line1ExitMid  = new Pose(127, 81, Math.toRadians(0));
-    private final Pose line1ExitEnd  = new Pose(134, 75, Math.toRadians(0));
+    private final Pose line1TowardsGate  = new Pose(18, 81, Math.toRadians(180));
+    private final Pose line1PressGate = new Pose(12, 76, Math.toRadians(180));
+    private final Pose driveToShoot2 = new Pose(43, 86, Math.toRadians(127)); // was 93,93 (97)
+    private final Pose toArtifactLine2 = new Pose(44, 58, Math.toRadians(180));//y was 60
+    private final Pose driveThroughLine2 = new Pose(3, 58, Math.toRadians(180));//x was 5
 
+    private final Pose line2ToShoot3Mid = new Pose(15, 55, Math.toRadians(0));
 
-    private final Pose line2ToShoot3Mid = new Pose(130, 58, Math.toRadians(0));
-    // ===========================================================
+    private final Pose driveToShoot3= new Pose(43, 86, Math.toRadians(127)); // was 93,97
+    private final Pose driveTowardsGate1= new Pose(30, 65, Math.toRadians(127)); // was 95
 
-    private final Pose toArtifactLine2 = new Pose(100, 59, Math.toRadians(0));
-    private final Pose driveThroughLine2 = new Pose(144, 59, Math.toRadians(0));
-    private final Pose driveToShoot2 = new Pose(97, 96, Math.toRadians(0)); // was 93,93 (97)
+    private final Pose driveToGate1= new Pose(3, 58, Math.toRadians(155)); // was 2,71
 
-    private final Pose driveTowardsGate1= new Pose(96, 55, Math.toRadians(53)); // was 100,68
-    private final Pose driveToGate1= new Pose(142, 62, Math.toRadians(25)); // was 120,71
-    // intake post
-    private final Pose intakeFromGate1 = new Pose(143, 54, Math.toRadians(75));
-    private final Pose intakeFromGate2 = new Pose(143, 54, Math.toRadians(75));
+    private final Pose intakeFromGate1 = new Pose(2.5, 55, Math.toRadians(127)); //angle was 105
 
-    private final Pose driveToShoot3= new Pose(99, 95, Math.toRadians(53)); // was 93,97
+    private final Pose driveToShoot4= new Pose(43, 86, Math.toRadians(127)); // was 93,95
 
-    private final Pose driveTowardsGate2= new Pose(97, 55, Math.toRadians(53)); // was 95
-    private final Pose driveToGate2= new Pose(141, 59, Math.toRadians(25)); // was 127,71
-    private final Pose driveToShoot4= new Pose(97, 92, Math.toRadians(53)); // was 93,95
+    private final Pose driveTowardsGate2= new Pose(30, 65, Math.toRadians(127)); // was 95
+
+    private final Pose driveToGate2= new Pose(3, 58, Math.toRadians(155)); // was 2,71
+
+    private final Pose intakeFromGate2 = new Pose(2.5, 55, Math.toRadians(127)); //angle was 105
 
     // (kept but unused in this flow)
-    private final Pose driveToShoot5 = new Pose(97, 97, Math.toRadians(53));
+    private final Pose driveToShoot5 = new Pose(43, 86, Math.toRadians(127)); // was 93,93
 
-    private final Pose leavePose = new Pose(115, 66, Math.toRadians(0));
-
+    private final Pose leavePose = new Pose(35, 74, Math.toRadians(180));
 
     private Path scorePreload;
-    private PathChain driveToLine1, pickUpLine1, line1ExitCurve, goShoot2, driveToLine2, pickUpLine2,
-            onWaytoGate1, toGate1, goShoot3, onWaytoGate2, toGate2, goShoot4, leaveOutChain;
+    private PathChain driveToLine1, pickUpLine1, line1ExitCurve, line1ExitCurveToGate, goShoot2, driveToLine2, pickUpLine2, gate1ToIntake,
+            gate1IntakeToShoot4, gate2ToIntake , goShoot3,gate2IntaketoShoot5, leaveOutChain;
 
     // combined chains
     private PathChain goGate1Combined;
@@ -144,7 +143,7 @@ public class RedBackV10 extends OpMode {
 
     // gate -> intake post, then intake post -> shoot
     private PathChain gate1ToIntakePost, intakePostToShoot3;
-    private PathChain gate2ToIntakePost, intakePostToShoot4;
+    private PathChain gate2ToIntakePost, intakePostToShoot4, intakePostToShoot5;
 
     // (kept but unused in this flow)
     private PathChain shoot4ToLine1, line1DriveThrough, line1ToShoot5;
@@ -166,15 +165,15 @@ public class RedBackV10 extends OpMode {
                 .build();
 
         // After driveThroughLine1, curve: (133,81)->(130,70)->(133,77)
-        line1ExitCurve = follower.pathBuilder()
-                .addPath(new BezierCurve(driveThroughLine1, line1ExitMid, line1ExitEnd))
-                .setLinearHeadingInterpolation(driveThroughLine1.getHeading(), line1ExitEnd.getHeading())
+        line1ExitCurveToGate = follower.pathBuilder()
+                .addPath(new BezierCurve(driveThroughLine1, line1TowardsGate, line1PressGate))
+                .setLinearHeadingInterpolation(driveThroughLine1.getHeading(), line1PressGate.getHeading())
                 .build();
 
         // After Line1 exit -> Shoot2
         goShoot2 = follower.pathBuilder()
-                .addPath(new BezierLine(line1ExitEnd, driveToShoot2))
-                .setLinearHeadingInterpolation(line1ExitEnd.getHeading(), driveToShoot2.getHeading())
+                .addPath(new BezierLine(line1PressGate ,driveToShoot2))
+                .setLinearHeadingInterpolation(line1PressGate.getHeading(), driveToShoot2.getHeading())
                 .build();
 
         // After Shoot2 -> Line2 entry
@@ -189,95 +188,59 @@ public class RedBackV10 extends OpMode {
                 .setLinearHeadingInterpolation(toArtifactLine2.getHeading(), driveThroughLine2.getHeading())
                 .build();
 
-        onWaytoGate1 = follower.pathBuilder()
-                .addPath(new BezierLine(driveToShoot2, driveTowardsGate1))
-                .setLinearHeadingInterpolation(driveToShoot2.getHeading(), driveTowardsGate1.getHeading())
-                .build();
-
-        toGate1 = follower.pathBuilder()
-                .addPath(new BezierLine(driveTowardsGate1, driveToGate1))
-                .setLinearHeadingInterpolation(driveTowardsGate1.getHeading(), driveToGate1.getHeading())
-                .build();
-
-        // kept (unused in this flow, kept)
-        goGate1Combined = follower.pathBuilder()
-                .addPath(new BezierCurve(driveThroughLine2, driveTowardsGate1, driveToGate1))
-                .setLinearHeadingInterpolation(driveThroughLine2.getHeading(), driveToGate1.getHeading())
-                .build();
-
         // UPDATED: pickUpLine2 end -> goShoot3 is now a BezierCurve with midpoint (135,58,0)
         goShoot3 = follower.pathBuilder()
                 .addPath(new BezierCurve(driveThroughLine2, line2ToShoot3Mid, driveToShoot3))
                 .setLinearHeadingInterpolation(driveThroughLine2.getHeading(), driveToShoot3.getHeading())
                 .build();
 
-        onWaytoGate2 = follower.pathBuilder()
-                .addPath(new BezierLine(driveToShoot3, driveTowardsGate2))
-                .setLinearHeadingInterpolation(driveToShoot3.getHeading(), driveTowardsGate2.getHeading())
-                .build();
-
-        toGate2 = follower.pathBuilder()
-                .addPath(new BezierLine(driveTowardsGate2, driveToGate2))
-                .setLinearHeadingInterpolation(driveTowardsGate2.getHeading(), driveToGate2.getHeading())
-                .build();
-
         // gate2 combined (unchanged)
-        goGate2Combined = follower.pathBuilder()
-                .addPath(new BezierLine(driveToShoot3, driveTowardsGate2))
-                .setLinearHeadingInterpolation(driveToShoot3.getHeading(), driveTowardsGate2.getHeading())
-                .addPath(new BezierLine(driveTowardsGate2, driveToGate2))
-                .setLinearHeadingInterpolation(driveTowardsGate2.getHeading(), driveToGate2.getHeading())
+
+        goGate1Combined = follower.pathBuilder()
+                .addPath(new BezierLine(driveToShoot3, driveTowardsGate1))
+                .setLinearHeadingInterpolation(driveToShoot3.getHeading(), driveTowardsGate1.getHeading())
+                .addPath(new BezierLine(driveTowardsGate1, driveToGate1))
+                .setLinearHeadingInterpolation(driveTowardsGate1.getHeading(), driveToGate1.getHeading())
                 .build();
 
-        // kept (unused)
-        goShoot4 = follower.pathBuilder()
-                .addPath(new BezierLine(driveToGate2, driveToShoot4))
-                .setLinearHeadingInterpolation(driveToGate2.getHeading(), driveToShoot4.getHeading())
-                .build();
-
-        // leave after Shoot4
-        leaveOutChain = follower.pathBuilder()
-                .addPath(new BezierLine(driveToShoot4, leavePose))
-                .setLinearHeadingInterpolation(driveToShoot4.getHeading(), leavePose.getHeading())
-                .build();
-
-        // gate -> intake post (kept)
-        gate1ToIntakePost = follower.pathBuilder()
+        // gate 2 uses intakeFromGate2
+        gate1ToIntake = follower.pathBuilder()
                 .addPath(new BezierLine(driveToGate1, intakeFromGate1))
                 .setLinearHeadingInterpolation(driveToGate1.getHeading(), intakeFromGate1.getHeading())
                 .build();
 
-        intakePostToShoot3 = follower.pathBuilder()
-                .addPath(new BezierLine(intakeFromGate1, driveToShoot3))
-                .setLinearHeadingInterpolation(intakeFromGate1.getHeading(), driveToShoot3.getHeading())
+        gate1IntakeToShoot4 = follower.pathBuilder()
+                .addPath(new BezierLine(intakeFromGate1, driveToShoot4))
+                .setLinearHeadingInterpolation(intakeFromGate1.getHeading(), driveToShoot4.getHeading())
+                .build();
+
+        goGate2Combined = follower.pathBuilder()
+                .addPath(new BezierLine(driveToShoot4, driveTowardsGate2))
+                .setLinearHeadingInterpolation(driveToShoot4.getHeading(), driveTowardsGate2.getHeading())
+                .addPath(new BezierLine(driveTowardsGate2, driveToGate2))
+                .setLinearHeadingInterpolation(driveTowardsGate2.getHeading(), driveToGate2.getHeading())
                 .build();
 
         // gate 2 uses intakeFromGate2
-        gate2ToIntakePost = follower.pathBuilder()
+        gate2ToIntake = follower.pathBuilder()
                 .addPath(new BezierLine(driveToGate2, intakeFromGate2))
-                .setLinearHeadingInterpolation(driveToGate2.getHeading(), intakeFromGate2.getHeading())
+                .setLinearHeadingInterpolation(driveToGate1.getHeading(), intakeFromGate1.getHeading())
                 .build();
 
-        intakePostToShoot4 = follower.pathBuilder()
-                .addPath(new BezierLine(intakeFromGate2, driveToShoot4))
-                .setLinearHeadingInterpolation(intakeFromGate2.getHeading(), driveToShoot4.getHeading())
+        gate2IntaketoShoot5 = follower.pathBuilder()
+                .addPath(new BezierLine(intakeFromGate2, driveToShoot5))
+                .setLinearHeadingInterpolation(intakeFromGate2.getHeading(), driveToShoot5.getHeading())
                 .build();
 
-        // ====== kept but unused ======
-        shoot4ToLine1 = follower.pathBuilder()
-                .addPath(new BezierLine(driveToShoot4, toArtifactLine1))
-                .setLinearHeadingInterpolation(driveToShoot4.getHeading(), toArtifactLine1.getHeading())
+
+        // leave after Shoot4
+        leaveOutChain = follower.pathBuilder()
+                .addPath(new BezierLine(driveToShoot5, leavePose))
+                .setLinearHeadingInterpolation(driveToShoot5.getHeading(), leavePose.getHeading())
                 .build();
 
-        line1DriveThrough = follower.pathBuilder()
-                .addPath(new BezierLine(toArtifactLine1, driveThroughLine1))
-                .setLinearHeadingInterpolation(toArtifactLine1.getHeading(), driveThroughLine1.getHeading())
-                .build();
 
-        line1ToShoot5 = follower.pathBuilder()
-                .addPath(new BezierLine(driveThroughLine1, driveToShoot5))
-                .setLinearHeadingInterpolation(driveThroughLine1.getHeading(), driveToShoot5.getHeading())
-                .build();
+
         // ============================
     }
 
@@ -380,6 +343,7 @@ public class RedBackV10 extends OpMode {
             case 1:
                 if (!follower.isBusy()) {
                     if (runShootWindowFirst()) {
+                        turret.saveFirstShotPosition();
                         intakeSlow();
                         follower.followPath(driveToLine1, true);
                         setPathState(2);
@@ -445,7 +409,7 @@ public class RedBackV10 extends OpMode {
                 if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
                         intakeStop();
-                        follower.followPath(goGate2Combined, true);
+                        follower.followPath(goGate1Combined, true);
                         setPathState(9);
                     }
                 }
@@ -455,8 +419,8 @@ public class RedBackV10 extends OpMode {
             case 9:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.5)) {
-                        follower.followPath(gate2ToIntakePost, true);
+                    if (pauseTime(0.75)) { //was 0.5
+                        follower.followPath(gate1ToIntake, true);
                         setPathState(10);
                     }
                 }
@@ -465,26 +429,58 @@ public class RedBackV10 extends OpMode {
             case 10:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(1.5)) {
+                    if (pauseTime(0.4)) {
                         intakeStop();
-                        follower.followPath(intakePostToShoot4, true);
+                        follower.followPath(gate1IntakeToShoot4, true);
                         setPathState(11);
                     }
                 }
                 break;
 
-            // Shoot4 -> Leave
+            // Shoot4 -> Gate2 again
             case 11:
                 if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
                         intakeStop();
-                        follower.followPath(leaveOutChain, true);
+                        follower.followPath(goGate2Combined, true);
                         setPathState(12);
                     }
                 }
                 break;
 
             case 12:
+                if (!follower.isBusy()) {
+                    intakeSlow();
+                    if (pauseTime(0.75)) {
+                        follower.followPath(gate2ToIntake, true);
+                        setPathState(13);
+                    }
+                }
+                break;
+
+            case 13:
+                if (!follower.isBusy()) {
+                    intakeSlow();
+                    if (pauseTime(0.40)) {
+                        intakeStop();
+                        follower.followPath(gate2IntaketoShoot5, true);
+                        setPathState(14);
+                    }
+                }
+                break;
+
+            // Shoot5 -> Leave
+            case 14:
+                if (!follower.isBusy()) {
+                    if (runShootWindowQuick()) {
+                        intakeStop();
+                        follower.followPath(leaveOutChain, true);
+                        setPathState(15);
+                    }
+                }
+                break;
+
+            case 15:
                 if (!follower.isBusy()) {
                     intakeStop();
                     setPathState(-1);
@@ -525,6 +521,8 @@ public class RedBackV10 extends OpMode {
         telemetry.addData("aimStable", turret.isAimedStable(now));
         telemetry.addData("tx", "%.2f", turret.getLastTx());
         telemetry.addData("turretPwr", "%.3f", turret.getPower());
+        telemetry.addData("omegaDps", "%.2f", omegaDps);
+        telemetry.addData("moveBlend", "%.2f", moveBlend);
         telemetry.addData("Shooter Target / Actual", "%.0f / %.0f", target, shooter.getVelocity());
         telemetry.update();
     }
@@ -559,7 +557,7 @@ public class RedBackV10 extends OpMode {
         rt = hardwareMap.get(Servo.class, "rt");
         ki = hardwareMap.get(Servo.class, "ki");
 
-        rt.setPosition(1.0);
+        rt.setPosition(1.0); //was 0.9
         ki.setPosition(0.2);
 
         turret.init(hardwareMap);
@@ -629,18 +627,45 @@ public class RedBackV10 extends OpMode {
 
         private double lastErr = 0;
 
+        // Last seen turret position for simple reacquire behavior
+        private int lastSeenTurretTicks = 0;
+        private boolean hasLastSeenTarget = false;
+        private double lastSeenTime = 0.0;
+
+        // Saved first-shot turret position
+        private int firstShotTurretTicks = 0;
+        private boolean hasFirstShotTurretTicks = false;
+
         private static final int TX_SIGN = 1;
         private static final int LEAD_SIGN = 1;
 
-        private static final double KP = 0.050; //was0.045 changed
-        private static final double KD = 0.003;
+        private static final double KP_MOVING = 0.055;
+        private static final double KP_STOPPED = 0.032;
 
-        private static final double FF = 0.012;
-        private static final double LEAD_TIME = 0.05; // rl was 0.03
+        private static final double KD_MOVING = 0.004;
+        private static final double KD_STOPPED = 0.0015;
+
+        private static final double FF_MOVING = 0.012;
+        private static final double FF_STOPPED = 0.0;
+
+        private static final double LEAD_TIME = 0.06; // rl was 0.03
+
+        private static final double STOPPED_MOVE_BLEND = 0.08;
+        private static final double STOPPED_OMEGA_DPS = 8.0;
+
+        private static final double CENTER_DEADBAND_TX = 0.75;
+        private static final double D_ENABLE_TX = 2.0;
+
+        private static final double MAX_PWR_MOVING = 0.75;
+        private static final double MAX_PWR_STOPPED = 0.35;
 
         private static final double AIM_TOL = 2.5;
         private static final double AIM_PWR_TOL = 0.12;
         private static final double AIM_STABLE = 0.12;
+
+        // Simple encoder return when tag is lost
+        private static final double LOST_TICKS_KP = 0.003;
+        private static final double LOST_MAX_POWER = 0.35;
 
         public void init(HardwareMap hw) {
             turret = hw.get(DcMotorEx.class, "turretSpin");
@@ -648,7 +673,7 @@ public class RedBackV10 extends OpMode {
             turret.setDirection(DcMotorSimple.Direction.REVERSE);
 
             limelight = hw.get(Limelight3A.class, "limelight");
-            limelight.pipelineSwitch(9);
+            limelight.pipelineSwitch(8);
             limelight.start();
 
             imu = hw.get(IMU.class, "imu");
@@ -665,6 +690,18 @@ public class RedBackV10 extends OpMode {
             aimHold = false;
             aimStart = 0;
             lastErr = 0;
+
+            lastSeenTurretTicks = turret.getCurrentPosition();
+            hasLastSeenTarget = false;
+            lastSeenTime = 0.0;
+
+            firstShotTurretTicks = 0;
+            hasFirstShotTurretTicks = false;
+        }
+
+        public void saveFirstShotPosition() {
+            firstShotTurretTicks = turret.getCurrentPosition();
+            hasFirstShotTurretTicks = true;
         }
 
         public void update(double now, double dt, double moveBlend, double omegaDps) {
@@ -673,43 +710,101 @@ public class RedBackV10 extends OpMode {
 
             LLResult r = limelight.getLatestResult();
             if (r == null || !r.isValid()) {
-                turret.setPower(0);
-                lastPower = 0;
                 aimHold = false;
+
+                int targetTicks;
+                boolean haveFallback = false;
+
+                if (hasLastSeenTarget && (now - lastSeenTime) < 0.25) {
+                    targetTicks = lastSeenTurretTicks;
+                    haveFallback = true;
+                } else if (hasFirstShotTurretTicks) {
+                    targetTicks = firstShotTurretTicks;
+                    haveFallback = true;
+                } else if (hasLastSeenTarget) {
+                    targetTicks = lastSeenTurretTicks;
+                    haveFallback = true;
+                } else {
+                    targetTicks = 0;
+                }
+
+                if (haveFallback) {
+                    int tickError = targetTicks - turret.getCurrentPosition();
+                    double power = clip(tickError * LOST_TICKS_KP, -LOST_MAX_POWER, LOST_MAX_POWER);
+
+                    turret.setPower(power);
+                    lastPower = power;
+                } else {
+                    turret.setPower(0);
+                    lastPower = 0;
+                }
                 return;
             }
+
+            // Save where the turret was when the target was last seen
+            lastSeenTurretTicks = turret.getCurrentPosition();
+            hasLastSeenTarget = true;
+            lastSeenTime = now;
 
             double txRaw = r.getTx();
             lastTx = txRaw;
 
+            boolean robotStopped = (moveBlend < STOPPED_MOVE_BLEND) && (Math.abs(omegaDps) < STOPPED_OMEGA_DPS);
+
             double txPred = (TX_SIGN * txRaw) + (LEAD_SIGN * omegaDps * LEAD_TIME);
 
-            double alpha = (moveBlend > 0.2) ? 0.28 : 0.55;
+            // More smoothing when stopped, less when moving
+            double alpha = robotStopped ? 0.72 : 0.28;
             txFiltered = alpha * txFiltered + (1.0 - alpha) * txPred;
 
             double error = txFiltered;
+
+            // Small deadband near center to stop chasing tiny Limelight noise
+            if (Math.abs(error) < CENTER_DEADBAND_TX) {
+                error = 0.0;
+            }
+
             double errAbs = Math.abs(error);
 
             double dErr = (error - lastErr) / dt;
             lastErr = error;
 
-            double p = KP * error;
-            double d = KD * dErr;
+            double kp = robotStopped ? KP_STOPPED : KP_MOVING;
+            double kd = robotStopped ? KD_STOPPED : KD_MOVING;
+            double ffBase = robotStopped ? FF_STOPPED : FF_MOVING;
+            double maxPower = robotStopped ? MAX_PWR_STOPPED : MAX_PWR_MOVING;
 
-            double ffScale = clip((errAbs - 1.5) / (8.0 - 1.5), 0.0, 1.0);
-            double ff = FF * omegaDps * (1.0 + moveBlend) * ffScale;
+            double p = kp * error;
+
+            // Disable D near center so noise doesn't cause wagging
+            double d = 0.0;
+            if (errAbs > D_ENABLE_TX) {
+                d = kd * dErr;
+            }
+
+            double ff = 0.0;
+            if (!robotStopped) {
+                double ffScale = clip((errAbs - 1.5) / (8.0 - 1.5), 0.0, 1.0);
+                ff = ffBase * omegaDps * (1.0 + moveBlend) * ffScale;
+            }
 
             double power = p + d + ff;
 
-            double brake = clip(errAbs / 6.0, 0.25, 1.0);
+            // Stronger softening near center when stopped
+            double brake;
+            if (robotStopped) {
+                brake = clip(errAbs / 4.0, 0.15, 1.0);
+            } else {
+                brake = clip(errAbs / 5.5, 0.25, 1.0);
+            }
             power *= brake;
 
-            power = clip(power, -0.75, 0.75);
+            power = clip(power, -maxPower, maxPower);
 
             turret.setPower(power);
             lastPower = power;
 
-            if (errAbs < AIM_TOL && Math.abs(power) < AIM_PWR_TOL) {
+            if (errAbs < AIM_TOL && Math.abs(power) < AIM_PWR_TOL && Math.abs(omegaDps) < STOPPED_OMEGA_DPS) {
                 if (!aimHold) {
                     aimHold = true;
                     aimStart = now;

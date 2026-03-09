@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.OldCode;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
@@ -11,6 +11,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -21,8 +22,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Blue Back V13", group = "Examples")
-public class BlueBackV13 extends OpMode {
+@Autonomous(name = "Blue Back V14", group = "Examples")
+@Disabled
+public class BlueBack14 extends OpMode {
 
     // ================= HARDWARE =================
     private DcMotor fi, bi;
@@ -52,12 +54,12 @@ public class BlueBackV13 extends OpMode {
     private static final double SPEED_FULL_BLEND = 40.0;
 
     // ================= SCORE WINDOW (AIM TIMEOUT) =================
-    private static final double AIM_TIMEOUT_SEC = 0.5; //was 0.5
+    private static final double AIM_TIMEOUT_SEC = 0.75; //was 0.5
 
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
     private double shootingSequenceStart = 0.0;
-    private static final double SHOOT_FEED_SEC = 1.1; //was 1.6 changed
+    private static final double SHOOT_FEED_SEC = 1.3; //was 1.6 changed
 
     // ================= SHOOTER SPIN-UP DELAY =================
     // ONLY used for FIRST shot window now
@@ -114,22 +116,22 @@ public class BlueBackV13 extends OpMode {
     private final Pose driveToShoot2 = new Pose(43, 86, Math.toRadians(127)); // was 93,93 (97)
 
     private final Pose driveTowardsGate1= new Pose(49, 53, Math.toRadians(127)); // was 100,68
-    private final Pose driveToGate1= new Pose(3, 58, Math.toRadians(155)); // was 5
+    private final Pose driveToGate1= new Pose(2, 58, Math.toRadians(155)); // was 5
 
     // intake post
-    private final Pose intakeFromGate1 = new Pose(3, 50, Math.toRadians(105)); //was 2
-    private final Pose intakeFromGate2 = new Pose(2, 56, Math.toRadians(105)); //was 1
+    private final Pose intakeFromGate1 = new Pose(3.5, 49, Math.toRadians(127)); //angle was 105
+    private final Pose intakeFromGate2 = new Pose(2.5, 55, Math.toRadians(127)); //angle was 105
 
     private final Pose driveToShoot3= new Pose(43, 86, Math.toRadians(127)); // was 93,97
 
     private final Pose driveTowardsGate2= new Pose(30, 65, Math.toRadians(127)); // was 95
-    private final Pose driveToGate2= new Pose(4, 58, Math.toRadians(155)); // was 2,71
+    private final Pose driveToGate2= new Pose(3, 58, Math.toRadians(155)); // was 2,71
     private final Pose driveToShoot4= new Pose(43, 86, Math.toRadians(127)); // was 93,95
 
     // (kept but unused in this flow)
-    private final Pose driveToShoot5 = new Pose(43, 86, Math.toRadians(-53)); // was 93,93
+    private final Pose driveToShoot5 = new Pose(43, 86, Math.toRadians(127)); // was 93,93
 
-    private final Pose leavePose = new Pose(35, 76, Math.toRadians(0));
+    private final Pose leavePose = new Pose(35, 74, Math.toRadians(180));
 
     private Path scorePreload;
     private PathChain driveToLine1, pickUpLine1, line1ExitCurve, goShoot2, driveToLine2, pickUpLine2,
@@ -141,7 +143,7 @@ public class BlueBackV13 extends OpMode {
 
     // gate -> intake post, then intake post -> shoot
     private PathChain gate1ToIntakePost, intakePostToShoot3;
-    private PathChain gate2ToIntakePost, intakePostToShoot4;
+    private PathChain gate2ToIntakePost, intakePostToShoot4, intakePostToShoot5;
 
     // (kept but unused in this flow)
     private PathChain shoot4ToLine1, line1DriveThrough, line1ToShoot5;
@@ -234,8 +236,8 @@ public class BlueBackV13 extends OpMode {
 
         // leave after Shoot4
         leaveOutChain = follower.pathBuilder()
-                .addPath(new BezierLine(driveToShoot4, leavePose))
-                .setLinearHeadingInterpolation(driveToShoot4.getHeading(), leavePose.getHeading())
+                .addPath(new BezierLine(driveToShoot5, leavePose))
+                .setLinearHeadingInterpolation(driveToShoot5.getHeading(), leavePose.getHeading())
                 .build();
 
         // gate -> intake post (kept)
@@ -258,6 +260,11 @@ public class BlueBackV13 extends OpMode {
         intakePostToShoot4 = follower.pathBuilder()
                 .addPath(new BezierLine(intakeFromGate2, driveToShoot4))
                 .setLinearHeadingInterpolation(intakeFromGate2.getHeading(), driveToShoot4.getHeading())
+                .build();
+
+        intakePostToShoot5 = follower.pathBuilder()
+                .addPath(new BezierLine(intakeFromGate2, driveToShoot5))
+                .setLinearHeadingInterpolation(intakeFromGate2.getHeading(), driveToShoot5.getHeading())
                 .build();
 
         // ====== kept but unused ======
@@ -471,18 +478,50 @@ public class BlueBackV13 extends OpMode {
                 }
                 break;
 
-            // Shoot4 -> Leave
+            // Shoot4 -> Gate2 again
             case 11:
                 if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
                         intakeStop();
-                        follower.followPath(leaveOutChain, true);
+                        follower.followPath(gate2ToIntakePost, true);
                         setPathState(12);
                     }
                 }
                 break;
 
             case 12:
+                if (!follower.isBusy()) {
+                    intakeSlow();
+                    if (pauseTime(0.75)) {
+                        follower.followPath(gate2ToIntakePost, true);
+                        setPathState(13);
+                    }
+                }
+                break;
+
+            case 13:
+                if (!follower.isBusy()) {
+                    intakeSlow();
+                    if (pauseTime(0.75)) {
+                        intakeStop();
+                        follower.followPath(intakePostToShoot5, true);
+                        setPathState(14);
+                    }
+                }
+                break;
+
+            // Shoot5 -> Leave
+            case 14:
+                if (!follower.isBusy()) {
+                    if (runShootWindowQuick()) {
+                        intakeStop();
+                        follower.followPath(leaveOutChain, true);
+                        setPathState(15);
+                    }
+                }
+                break;
+
+            case 15:
                 if (!follower.isBusy()) {
                     intakeStop();
                     setPathState(-1);

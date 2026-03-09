@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.OldCode;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
@@ -11,6 +11,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -21,8 +22,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Blue Back V9", group = "Examples")
-public class BlueBackV9 extends OpMode {
+@Autonomous(name = "Blue Back V13", group = "Examples")
+@Disabled
+public class BlueBackV13 extends OpMode {
 
     // ================= HARDWARE =================
     private DcMotor fi, bi;
@@ -34,40 +36,37 @@ public class BlueBackV9 extends OpMode {
     private Timer pathTimer;
     private int pathState;
     private double stateStartTime = 0.0;
-    double target = 1000.0; // change if needed
+
+    // RCRed-style target variable (ticks/sec). Change this value to change flywheel velocity.
+    double target = 1150.0; // change if needed was 1250
 
     // ================= TURRET =================
     private final TurretTracker turret = new TurretTracker();
     private double lastLoopTime = 0;
 
-    // ================= SHOOTER COMP =================
-    private static final double NOMINAL_VOLTAGE = 12.6;
-    private static final double MIN_VOLTAGE_FOR_COMP = 10.5;
-    private static final double MAX_COMP_MULT = 1.35;
-    private static final double MIN_COMP_MULT = 0.85;
-
-    private static final double SHOOTER_KP = 24.0;
+    // ================= SHOOTER PIDF (MATCH RCRed) =================
+    private static final double SHOOTER_KP = 300;
     private static final double SHOOTER_KI = 0.0;
     private static final double SHOOTER_KD = 0.001;
-    private static final double SHOOTER_KF = 15.5;
+    private static final double SHOOTER_KF = 12.5;
 
     // ================= MOVEMENT BLEND =================
     private static final double SPEED_FULL_BLEND = 40.0;
 
     // ================= SCORE WINDOW (AIM TIMEOUT) =================
-    private static final double AIM_TIMEOUT_SEC = 0.35;
+    private static final double AIM_TIMEOUT_SEC = 0.5; //was 0.5
 
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
     private double shootingSequenceStart = 0.0;
-    private static final double SHOOT_FEED_SEC = 1.6; //was 1.0 (how long the robot shoots)
+    private static final double SHOOT_FEED_SEC = 1.1; //was 1.6 changed
 
     // ================= SHOOTER SPIN-UP DELAY =================
     // ONLY used for FIRST shot window now
-    private static final double SHOOTER_SPINUP_SEC = 2.0; //was 2.0 (how long the robot has to speed up to shoot)
+    private static final double SHOOTER_SPINUP_SEC = 1.25; //was 2.0 (how long the robot has to speed up to shoot) changed
 
     // ================= QUICK SETTLE FOR SUBSEQUENT SHOTS =================
-    private static final double SHOOT_SETTLE_SEC = 1.0; //was 0.4
+    private static final double SHOOT_SETTLE_SEC = 1.0; //was 1.0 changed
 
     // ================= FIRST-SPINUP DONE FLAG =================
     private boolean firstSpinupDone = false;
@@ -100,7 +99,7 @@ public class BlueBackV9 extends OpMode {
     // ================= POSES =================
 
     private final Pose startPose = new Pose(24, 126, Math.toRadians(135));
-    private final Pose scorePose = new Pose(45, 84, Math.toRadians(127));// was 93,93
+    private final Pose scorePose = new Pose(43, 86, Math.toRadians(127));// was 45, 84
 
     // ====== Line1 pickup + exit curve ======
     private final Pose toArtifactLine1 = new Pose(44, 82, Math.toRadians(180)); //y was 84
@@ -109,31 +108,28 @@ public class BlueBackV9 extends OpMode {
     private final Pose line1ExitMid  = new Pose(18, 81, Math.toRadians(180));
     private final Pose line1ExitEnd  = new Pose(12, 76, Math.toRadians(180));
 
-
     private final Pose line2ToShoot3Mid = new Pose(15, 55, Math.toRadians(0));
     // ===========================================================
 
-
     private final Pose toArtifactLine2 = new Pose(44, 58, Math.toRadians(180));//y was 60
     private final Pose driveThroughLine2 = new Pose(3, 58, Math.toRadians(180));//x was 5
-    private final Pose driveToShoot2 = new Pose(45, 84, Math.toRadians(127)); // was 93,93 (97)
+    private final Pose driveToShoot2 = new Pose(43, 86, Math.toRadians(127)); // was 93,93 (97)
 
-    private final Pose driveTowardsGate1= new Pose(48, 55, Math.toRadians(127)); // was 100,68
-    private final Pose driveToGate1= new Pose(4, 62, Math.toRadians(155)); // was 120,71
+    private final Pose driveTowardsGate1= new Pose(49, 53, Math.toRadians(127)); // was 100,68
+    private final Pose driveToGate1= new Pose(3, 58, Math.toRadians(155)); // was 5
 
     // intake post
-    private final Pose intakeFromGate1 = new Pose(2, 52, Math.toRadians(105)); //y was 54
-    private final Pose intakeFromGate2 = new Pose(1, 56, Math.toRadians(105));
+    private final Pose intakeFromGate1 = new Pose(3, 50, Math.toRadians(105)); //was 2
+    private final Pose intakeFromGate2 = new Pose(2, 56, Math.toRadians(105)); //was 1
 
-    private final Pose driveToShoot3= new Pose(52, 77, Math.toRadians(127)); // was 93,97
+    private final Pose driveToShoot3= new Pose(43, 86, Math.toRadians(127)); // was 93,97
 
-    private final Pose driveTowardsGate2= new Pose(30, 67, Math.toRadians(127)); // was 95
-    private final Pose driveToGate2= new Pose(7, 60, Math.toRadians(155)); // was 2,71
-    private final Pose driveToShoot4= new Pose(50, 79, Math.toRadians(127)); // was 93,95
-
+    private final Pose driveTowardsGate2= new Pose(30, 65, Math.toRadians(127)); // was 95
+    private final Pose driveToGate2= new Pose(4, 58, Math.toRadians(155)); // was 2,71
+    private final Pose driveToShoot4= new Pose(43, 86, Math.toRadians(127)); // was 93,95
 
     // (kept but unused in this flow)
-    private final Pose driveToShoot5 = new Pose(97, 47, Math.toRadians(-53)); // was 93,93
+    private final Pose driveToShoot5 = new Pose(43, 86, Math.toRadians(-53)); // was 93,93
 
     private final Pose leavePose = new Pose(35, 76, Math.toRadians(0));
 
@@ -322,7 +318,7 @@ public class BlueBackV9 extends OpMode {
                 shootingSequenceActive = true;
                 shootingSequenceStart = now;
 
-                // start pulse ON immediately
+                // kept (no longer used for pulsing)
                 feedPulseOn = true;
                 feedNextToggleTime = now + FEED_ON_SEC;
 
@@ -332,7 +328,7 @@ public class BlueBackV9 extends OpMode {
             }
         }
 
-        // PULSED FEED during shooting window
+        // CONTINUOUS FEED during shooting window (NO PULSE)
         intakeShootFeed();
         return (now - shootingSequenceStart) >= SHOOT_FEED_SEC;
     }
@@ -355,7 +351,7 @@ public class BlueBackV9 extends OpMode {
                 shootingSequenceActive = true;
                 shootingSequenceStart = now;
 
-                // start pulse ON immediately
+                // kept (no longer used for pulsing)
                 feedPulseOn = true;
                 feedNextToggleTime = now + FEED_ON_SEC;
 
@@ -365,7 +361,7 @@ public class BlueBackV9 extends OpMode {
             }
         }
 
-        // PULSED FEED during shooting window
+        // CONTINUOUS FEED during shooting window (NO PULSE)
         intakeShootFeed();
         return (now - shootingSequenceStart) >= SHOOT_FEED_SEC;
     }
@@ -383,6 +379,7 @@ public class BlueBackV9 extends OpMode {
             case 1:
                 if (!follower.isBusy()) {
                     if (runShootWindowFirst()) {
+                        turret.saveFirstShotPosition();
                         intakeSlow();
                         follower.followPath(driveToLine1, true);
                         setPathState(2);
@@ -458,7 +455,7 @@ public class BlueBackV9 extends OpMode {
             case 9:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.5)) {
+                    if (pauseTime(0.75)) { //was 0.5
                         follower.followPath(gate2ToIntakePost, true);
                         setPathState(10);
                     }
@@ -468,7 +465,7 @@ public class BlueBackV9 extends OpMode {
             case 10:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(1.5)) {
+                    if (pauseTime(0.75)) {
                         intakeStop();
                         follower.followPath(intakePostToShoot4, true);
                         setPathState(11);
@@ -499,10 +496,6 @@ public class BlueBackV9 extends OpMode {
         }
     }
 
-    // ================= SHOOTER: REPLACED WITH RED v7 RAMP-VELOCITY SPINUP =================
-    private SpinUpRampVelocity spinup;
-    private boolean shooterSpinupStarted = false;
-
     // ================= LOOP =================
     @Override
     public void loop() {
@@ -512,12 +505,8 @@ public class BlueBackV9 extends OpMode {
         lastLoopTime = now;
         if (dt < 0.001) dt = 0.001;
 
-        // Shooter always on (RAMP VELOCITY ONLY)
-        if (!shooterSpinupStarted) {
-            spinup.start(1175, now); //1147
-            shooterSpinupStarted = true;
-        }
-        spinup.update(now);
+        // Shooter always on (MATCH RCRed: direct setVelocity in ticks/sec; no target*comp)
+        shooter.setVelocity(target);
 
         autonomousPathUpdate();
         follower.update();
@@ -536,6 +525,8 @@ public class BlueBackV9 extends OpMode {
         telemetry.addData("aimStable", turret.isAimedStable(now));
         telemetry.addData("tx", "%.2f", turret.getLastTx());
         telemetry.addData("turretPwr", "%.3f", turret.getPower());
+        telemetry.addData("omegaDps", "%.2f", omegaDps);
+        telemetry.addData("moveBlend", "%.2f", moveBlend);
         telemetry.addData("Shooter Target / Actual", "%.0f / %.0f", target, shooter.getVelocity());
         telemetry.update();
     }
@@ -566,16 +557,11 @@ public class BlueBackV9 extends OpMode {
             shooter.setVelocityPIDFCoefficients(SHOOTER_KP, SHOOTER_KI, SHOOTER_KD, SHOOTER_KF);
         } catch (Exception ignored) {}
 
-        // NEW: ramp-velocity spinup (matches RED v7 logic)
-        spinup = new SpinUpRampVelocity(shooter);
-        shooterSpinupStarted = false;
-
         lt = hardwareMap.get(Servo.class, "lt");
         rt = hardwareMap.get(Servo.class, "rt");
         ki = hardwareMap.get(Servo.class, "ki");
 
-
-        rt.setPosition(0.9);
+        rt.setPosition(1.0); //was 0.9
         ki.setPosition(0.2);
 
         turret.init(hardwareMap);
@@ -598,7 +584,6 @@ public class BlueBackV9 extends OpMode {
         pauseEnd = 0;
 
         firstSpinupDone = false;
-        shooterSpinupStarted = false;
 
         setPathState(0);
     }
@@ -614,25 +599,10 @@ public class BlueBackV9 extends OpMode {
         bi.setPower(-0.65);
     }
 
-    /** PULSED feed: ON for FEED_ON_SEC, OFF for FEED_OFF_SEC while called. */
+    /** CONTINUOUS feed (NO PULSE): when shooting, both motors at 1.0 power. */
     private void intakeShootFeed() {
-        double now = getRuntime();
-
-        if (feedNextToggleTime <= 0.0) {
-            feedPulseOn = true;
-            feedNextToggleTime = now + FEED_ON_SEC;
-        } else if (now >= feedNextToggleTime) {
-            feedPulseOn = !feedPulseOn;
-            feedNextToggleTime = now + (feedPulseOn ? FEED_ON_SEC : FEED_OFF_SEC);
-        }
-
-        if (feedPulseOn) {
-            fi.setPower(1.0);
-            bi.setPower(1.0);
-        } else {
-            fi.setPower(0.0);
-            bi.setPower(0.0);
-        }
+        fi.setPower(1.0);
+        bi.setPower(1.0);
     }
 
     private void intakeStop() {
@@ -640,69 +610,8 @@ public class BlueBackV9 extends OpMode {
         bi.setPower(0.0);
     }
 
-    // ================= SHOOTER (REPLACEMENT HELPERS) =================
-    // Matches the RED v7 "SpinUpRampVelocity" approach: velocity ramp only, no raw kick.
-    public static class SpinUpRampVelocity {
-
-        public double rampSec = 0.50;     // tune if needed
-        public double minRampSec = 0.12;  // safety
-        public double maxRampSec = 1.50;  // safety
-
-        private boolean active = false;
-        private double startTime = 0.0;   // OpMode runtime seconds
-        private double targetVel = 0.0;
-
-        private double startVel = 0.0;
-        private double cmdVel = 0.0;
-
-        private final DcMotorEx shooter;
-
-        public SpinUpRampVelocity(DcMotorEx shooterMotor) {
-            this.shooter = shooterMotor;
-        }
-
-        public void start(double targetTicksPerSec, double nowSec) {
-            this.targetVel = targetTicksPerSec;
-            this.startTime = nowSec;
-            this.active = true;
-
-            shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            startVel = Math.max(0.0, shooter.getVelocity());
-            cmdVel = startVel;
-            shooter.setVelocity(cmdVel);
-        }
-
-        public void update(double nowSec) {
-            if (!active) return;
-
-            double r = clip(rampSec, minRampSec, maxRampSec);
-            double elapsed = nowSec - startTime;
-
-            double t = clip(elapsed / r, 0.0, 1.0);
-            cmdVel = lerp(startVel, targetVel, t);
-
-            shooter.setVelocity(cmdVel);
-
-            if (t >= 1.0) {
-                cmdVel = targetVel;
-                shooter.setVelocity(cmdVel);
-                active = false;
-            }
-        }
-
-        public void stop() {
-            active = false;
-            cmdVel = 0.0;
-        }
-    }
-
     private static double clip(double v, double lo, double hi) {
         return Math.max(lo, Math.min(hi, v));
-    }
-
-    private static double lerp(double a, double b, double t) {
-        return a + (b - a) * t;
     }
 
     // ================= TURRET TRACKER =================
@@ -722,18 +631,45 @@ public class BlueBackV9 extends OpMode {
 
         private double lastErr = 0;
 
+        // Last seen turret position for simple reacquire behavior
+        private int lastSeenTurretTicks = 0;
+        private boolean hasLastSeenTarget = false;
+        private double lastSeenTime = 0.0;
+
+        // Saved first-shot turret position
+        private int firstShotTurretTicks = 0;
+        private boolean hasFirstShotTurretTicks = false;
+
         private static final int TX_SIGN = 1;
         private static final int LEAD_SIGN = 1;
 
-        private static final double KP = 0.045;
-        private static final double KD = 0.003;
+        private static final double KP_MOVING = 0.055;
+        private static final double KP_STOPPED = 0.032;
 
-        private static final double FF = 0.012;
-        private static final double LEAD_TIME = 0.03;
+        private static final double KD_MOVING = 0.004;
+        private static final double KD_STOPPED = 0.0015;
+
+        private static final double FF_MOVING = 0.012;
+        private static final double FF_STOPPED = 0.0;
+
+        private static final double LEAD_TIME = 0.06; // rl was 0.03
+
+        private static final double STOPPED_MOVE_BLEND = 0.08;
+        private static final double STOPPED_OMEGA_DPS = 8.0;
+
+        private static final double CENTER_DEADBAND_TX = 0.75;
+        private static final double D_ENABLE_TX = 2.0;
+
+        private static final double MAX_PWR_MOVING = 0.75;
+        private static final double MAX_PWR_STOPPED = 0.35;
 
         private static final double AIM_TOL = 2.5;
         private static final double AIM_PWR_TOL = 0.12;
         private static final double AIM_STABLE = 0.12;
+
+        // Simple encoder return when tag is lost
+        private static final double LOST_TICKS_KP = 0.003;
+        private static final double LOST_MAX_POWER = 0.35;
 
         public void init(HardwareMap hw) {
             turret = hw.get(DcMotorEx.class, "turretSpin");
@@ -758,6 +694,18 @@ public class BlueBackV9 extends OpMode {
             aimHold = false;
             aimStart = 0;
             lastErr = 0;
+
+            lastSeenTurretTicks = turret.getCurrentPosition();
+            hasLastSeenTarget = false;
+            lastSeenTime = 0.0;
+
+            firstShotTurretTicks = 0;
+            hasFirstShotTurretTicks = false;
+        }
+
+        public void saveFirstShotPosition() {
+            firstShotTurretTicks = turret.getCurrentPosition();
+            hasFirstShotTurretTicks = true;
         }
 
         public void update(double now, double dt, double moveBlend, double omegaDps) {
@@ -766,43 +714,101 @@ public class BlueBackV9 extends OpMode {
 
             LLResult r = limelight.getLatestResult();
             if (r == null || !r.isValid()) {
-                turret.setPower(0);
-                lastPower = 0;
                 aimHold = false;
+
+                int targetTicks;
+                boolean haveFallback = false;
+
+                if (hasLastSeenTarget && (now - lastSeenTime) < 0.25) {
+                    targetTicks = lastSeenTurretTicks;
+                    haveFallback = true;
+                } else if (hasFirstShotTurretTicks) {
+                    targetTicks = firstShotTurretTicks;
+                    haveFallback = true;
+                } else if (hasLastSeenTarget) {
+                    targetTicks = lastSeenTurretTicks;
+                    haveFallback = true;
+                } else {
+                    targetTicks = 0;
+                }
+
+                if (haveFallback) {
+                    int tickError = targetTicks - turret.getCurrentPosition();
+                    double power = clip(tickError * LOST_TICKS_KP, -LOST_MAX_POWER, LOST_MAX_POWER);
+
+                    turret.setPower(power);
+                    lastPower = power;
+                } else {
+                    turret.setPower(0);
+                    lastPower = 0;
+                }
                 return;
             }
+
+            // Save where the turret was when the target was last seen
+            lastSeenTurretTicks = turret.getCurrentPosition();
+            hasLastSeenTarget = true;
+            lastSeenTime = now;
 
             double txRaw = r.getTx();
             lastTx = txRaw;
 
+            boolean robotStopped = (moveBlend < STOPPED_MOVE_BLEND) && (Math.abs(omegaDps) < STOPPED_OMEGA_DPS);
+
             double txPred = (TX_SIGN * txRaw) + (LEAD_SIGN * omegaDps * LEAD_TIME);
 
-            double alpha = (moveBlend > 0.2) ? 0.28 : 0.55;
+            // More smoothing when stopped, less when moving
+            double alpha = robotStopped ? 0.72 : 0.28;
             txFiltered = alpha * txFiltered + (1.0 - alpha) * txPred;
 
             double error = txFiltered;
+
+            // Small deadband near center to stop chasing tiny Limelight noise
+            if (Math.abs(error) < CENTER_DEADBAND_TX) {
+                error = 0.0;
+            }
+
             double errAbs = Math.abs(error);
 
             double dErr = (error - lastErr) / dt;
             lastErr = error;
 
-            double p = KP * error;
-            double d = KD * dErr;
+            double kp = robotStopped ? KP_STOPPED : KP_MOVING;
+            double kd = robotStopped ? KD_STOPPED : KD_MOVING;
+            double ffBase = robotStopped ? FF_STOPPED : FF_MOVING;
+            double maxPower = robotStopped ? MAX_PWR_STOPPED : MAX_PWR_MOVING;
 
-            double ffScale = clip((errAbs - 1.5) / (8.0 - 1.5), 0.0, 1.0);
-            double ff = FF * omegaDps * (1.0 + moveBlend) * ffScale;
+            double p = kp * error;
+
+            // Disable D near center so noise doesn't cause wagging
+            double d = 0.0;
+            if (errAbs > D_ENABLE_TX) {
+                d = kd * dErr;
+            }
+
+            double ff = 0.0;
+            if (!robotStopped) {
+                double ffScale = clip((errAbs - 1.5) / (8.0 - 1.5), 0.0, 1.0);
+                ff = ffBase * omegaDps * (1.0 + moveBlend) * ffScale;
+            }
 
             double power = p + d + ff;
 
-            double brake = clip(errAbs / 6.0, 0.25, 1.0);
+            // Stronger softening near center when stopped
+            double brake;
+            if (robotStopped) {
+                brake = clip(errAbs / 4.0, 0.15, 1.0);
+            } else {
+                brake = clip(errAbs / 5.5, 0.25, 1.0);
+            }
             power *= brake;
 
-            power = clip(power, -0.75, 0.75);
+            power = clip(power, -maxPower, maxPower);
 
             turret.setPower(power);
             lastPower = power;
 
-            if (errAbs < AIM_TOL && Math.abs(power) < AIM_PWR_TOL) {
+            if (errAbs < AIM_TOL && Math.abs(power) < AIM_PWR_TOL && Math.abs(omegaDps) < STOPPED_OMEGA_DPS) {
                 if (!aimHold) {
                     aimHold = true;
                     aimStart = now;

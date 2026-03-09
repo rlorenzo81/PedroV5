@@ -21,8 +21,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Blue Back V15", group = "Examples")
-public class BlueBackV15 extends OpMode {
+@Autonomous(name = "Red Back V17", group = "Examples")
+public class RedBackV17 extends OpMode {
 
     // ================= HARDWARE =================
     private DcMotor fi, bi;
@@ -36,7 +36,7 @@ public class BlueBackV15 extends OpMode {
     private double stateStartTime = 0.0;
 
     // RCRed-style target variable (ticks/sec). Change this value to change flywheel velocity.
-    double target = 1150.0; // change if needed was 1250
+    double target = 1115.0; // change if needed was 1150 working good but some bounce outr
 
     // ================= TURRET =================
     private final TurretTracker turret = new TurretTracker();
@@ -52,12 +52,14 @@ public class BlueBackV15 extends OpMode {
     private static final double SPEED_FULL_BLEND = 40.0;
 
     // ================= SCORE WINDOW (AIM TIMEOUT) =================
-    private static final double AIM_TIMEOUT_SEC = 0.5; //was 0.5
+    private static final double AIM_TIMEOUT_SEC = 0.75; //was 0.5
+
+    private static final int TURRET_OFFSET_TICKS = 0; // adjust this number
 
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
     private double shootingSequenceStart = 0.0;
-    private static final double SHOOT_FEED_SEC = 1.1; //was 1.6 changed
+    private static final double SHOOT_FEED_SEC = 1.3; //was 1.6 changed
 
     // ================= SHOOTER SPIN-UP DELAY =================
     // ONLY used for FIRST shot window now
@@ -96,42 +98,46 @@ public class BlueBackV15 extends OpMode {
 
     // ================= POSES =================
 
-    private final Pose startPose = new Pose(24, 126, Math.toRadians(135));
-    private final Pose scorePose = new Pose(43, 86, Math.toRadians(127)); // was 45, 84
+    private final Pose startPose = new Pose(120, 126, Math.toRadians(45)); //done was 62, angle was 45
+    private final Pose scorePose = new Pose(98, 97, Math.toRadians(45));// was 45, 84 done
 
     // ====== Line1 pickup + exit curve ======
-    private final Pose toArtifactLine1 = new Pose(44, 82, Math.toRadians(180)); // y was 84
-    private final Pose driveThroughLine1 = new Pose(12, 82, Math.toRadians(180)); // y was 84
+    private final Pose toArtifactLine1 = new Pose(100, 81, Math.toRadians(0)); //y was 84 done
+    private final Pose driveThroughLine1 = new Pose(133, 81, Math.toRadians(0)); //y was 84 done
 
-    private final Pose line1ExitMid  = new Pose(18, 81, Math.toRadians(180));
-    private final Pose line1ExitEnd  = new Pose(12, 76, Math.toRadians(180));
+    private final Pose line1TowardsGate  = new Pose(127, 81, Math.toRadians(0)); //done
+    private final Pose line1PressGate = new Pose(134, 75, Math.toRadians(0)); //done
+    private final Pose driveToShoot2 = new Pose(98, 97, Math.toRadians(45)); // was 93,93 (97) done
+    private final Pose toArtifactLine2 = new Pose(100, 59, Math.toRadians(0));//y was 60 done
+    private final Pose driveThroughLine2 = new Pose(144, 59, Math.toRadians(0));//x was 5 done
 
-    private final Pose line2ToShoot3Mid = new Pose(15, 55, Math.toRadians(0));
-    // ===========================================================
+    private final Pose line2ToShoot3Mid = new Pose(130, 40, Math.toRadians(53)); //done
 
-    private final Pose toArtifactLine2 = new Pose(44, 58, Math.toRadians(180)); // y was 60
-    private final Pose driveThroughLine2 = new Pose(3, 58, Math.toRadians(180)); // x was 5
-    private final Pose driveToShoot2 = new Pose(43, 86, Math.toRadians(127)); // was 93,93 (97)
+    private final Pose driveToShoot3= new Pose(98, 97, Math.toRadians(45)); // was 93,97 done
+    private final Pose driveTowardsGate1= new Pose(110, 55, Math.toRadians(25)); // was 95 done
 
-    private final Pose driveToShoot3 = new Pose(43, 86, Math.toRadians(127)); // was 93,97
+    private final Pose driveToGate1= new Pose(138, 58, Math.toRadians(25)); // y was 62
 
-    private final Pose driveTowardsGate2 = new Pose(30, 65, Math.toRadians(127)); // was 95
-    private final Pose driveToGate2 = new Pose(4, 58, Math.toRadians(155)); // was 2,71
-    private final Pose intakeFromGate2 = new Pose(2, 56, Math.toRadians(105)); // was 1
-    private final Pose driveToShoot4 = new Pose(43, 86, Math.toRadians(127)); // was 93,95
+    private final Pose intakeFromGate1 = new Pose(143, 51, Math.toRadians(75)); //y was 54, angle was 105 done
 
-    // separate poses for the extra cycle so they can be tuned later
-    private final Pose driveToGate3 = new Pose(4, 58, Math.toRadians(155));
-    private final Pose intakeFromGate3 = new Pose(2, 56, Math.toRadians(105));
+    private final Pose driveToShoot4= new Pose(95, 97, Math.toRadians(45)); // was 93,95 done
 
-    private final Pose driveToShoot5 = new Pose(43, 86, Math.toRadians(-53)); // was 93,93
+    private final Pose driveTowardsGate2= new Pose(110, 55, Math.toRadians(25)); // was 95 done
 
-    private final Pose leavePose = new Pose(35, 76, Math.toRadians(0));
+    private final Pose driveToGate2= new Pose(138, 58, Math.toRadians(25)); // was 2,71 done
+
+    private final Pose intakeFromGate2 = new Pose(143, 54, Math.toRadians(75)); //angle was 105 done
+
+    // (kept but unused in this flow)
+    private final Pose driveToShoot5 = new Pose(95, 97, Math.toRadians(45)); // was 93,93
+
+    private final Pose leavePose = new Pose(115, 66, Math.toRadians(0));
 
     private Path scorePreload;
-    private PathChain driveToLine1, pickUpLine1, line1ExitCurve, goShoot2, driveToLine2, pickUpLine2,
-            goShoot3, goGate2Combined, gate2ToIntakePost, intakePostToShoot4,
-            shoot4ToGate3, gate3ToIntakePost, intakePostToShoot5, leaveOutChain;
+    private PathChain driveToLine1, pickUpLine1,  line1CurveToGate, goShoot2, driveToLine2, pickUpLine2, gate1ToIntake,
+            gate1IntakeToShoot4, gate2ToIntake , goShoot3,gate2IntakeToShoot5 , leaveOutChain, goGate1Combined, goGate2Combined;
+
+
 
     public void buildPaths() {
         scorePreload = new Path(new BezierLine(startPose, scorePose));
@@ -149,16 +155,16 @@ public class BlueBackV15 extends OpMode {
                 .setLinearHeadingInterpolation(toArtifactLine1.getHeading(), driveThroughLine1.getHeading())
                 .build();
 
-        // After driveThroughLine1, curve
-        line1ExitCurve = follower.pathBuilder()
-                .addPath(new BezierCurve(driveThroughLine1, line1ExitMid, line1ExitEnd))
-                .setLinearHeadingInterpolation(driveThroughLine1.getHeading(), line1ExitEnd.getHeading())
+        // After driveThroughLine1, curve: (133,81)->(130,70)->(133,77)
+        line1CurveToGate = follower.pathBuilder()
+                .addPath(new BezierCurve(driveThroughLine1, line1TowardsGate, line1PressGate))
+                .setLinearHeadingInterpolation(driveThroughLine1.getHeading(),line1TowardsGate.getHeading(), line1PressGate.getHeading())
                 .build();
 
         // After Line1 exit -> Shoot2
         goShoot2 = follower.pathBuilder()
-                .addPath(new BezierLine(line1ExitEnd, driveToShoot2))
-                .setLinearHeadingInterpolation(line1ExitEnd.getHeading(), driveToShoot2.getHeading())
+                .addPath(new BezierLine(line1PressGate ,driveToShoot2))
+                .setLinearHeadingInterpolation(line1PressGate.getHeading(), driveToShoot2.getHeading())
                 .build();
 
         // After Shoot2 -> Line2 entry
@@ -173,55 +179,60 @@ public class BlueBackV15 extends OpMode {
                 .setLinearHeadingInterpolation(toArtifactLine2.getHeading(), driveThroughLine2.getHeading())
                 .build();
 
-        // pickUpLine2 end -> goShoot3 is a BezierCurve
+        // UPDATED: pickUpLine2 end -> goShoot3 is now a BezierCurve with midpoint (135,58,0)
         goShoot3 = follower.pathBuilder()
                 .addPath(new BezierCurve(driveThroughLine2, line2ToShoot3Mid, driveToShoot3))
-                .setLinearHeadingInterpolation(driveThroughLine2.getHeading(), driveToShoot3.getHeading())
+                .setLinearHeadingInterpolation(driveThroughLine2.getHeading(), line2ToShoot3Mid.getHeading(), driveToShoot3.getHeading())
                 .build();
 
-        // Shoot3 -> Gate2
+        // gate2 combined (unchanged)
+
+        goGate1Combined = follower.pathBuilder()
+                .addPath(new BezierLine(driveToShoot3, driveTowardsGate1))
+                .setLinearHeadingInterpolation(driveToShoot3.getHeading(), driveTowardsGate1.getHeading())
+                .addPath(new BezierLine(driveTowardsGate1, driveToGate1))
+                .setLinearHeadingInterpolation(driveTowardsGate1.getHeading(), driveToGate1.getHeading())
+                .build();
+
+        // gate 2 uses intakeFromGate2
+        gate1ToIntake = follower.pathBuilder()
+                .addPath(new BezierLine(driveToGate1, intakeFromGate1))
+                .setLinearHeadingInterpolation(driveToGate1.getHeading(), intakeFromGate1.getHeading())
+                .build();
+
+        gate1IntakeToShoot4 = follower.pathBuilder()
+                .addPath(new BezierLine(intakeFromGate1, driveToShoot4))
+                .setLinearHeadingInterpolation(intakeFromGate1.getHeading(), driveToShoot4.getHeading())
+                .build();
+
         goGate2Combined = follower.pathBuilder()
-                .addPath(new BezierLine(driveToShoot3, driveTowardsGate2))
-                .setLinearHeadingInterpolation(driveToShoot3.getHeading(), driveTowardsGate2.getHeading())
+                .addPath(new BezierLine(driveToShoot4, driveTowardsGate2))
+                .setLinearHeadingInterpolation(driveToShoot4.getHeading(), driveTowardsGate2.getHeading())
                 .addPath(new BezierLine(driveTowardsGate2, driveToGate2))
                 .setLinearHeadingInterpolation(driveTowardsGate2.getHeading(), driveToGate2.getHeading())
                 .build();
 
-        // gate2 -> intake2
-        gate2ToIntakePost = follower.pathBuilder()
+        // gate 2 uses intakeFromGate2
+        gate2ToIntake = follower.pathBuilder()
                 .addPath(new BezierLine(driveToGate2, intakeFromGate2))
                 .setLinearHeadingInterpolation(driveToGate2.getHeading(), intakeFromGate2.getHeading())
                 .build();
 
-        // intake2 -> shoot4
-        intakePostToShoot4 = follower.pathBuilder()
-                .addPath(new BezierLine(intakeFromGate2, driveToShoot4))
-                .setLinearHeadingInterpolation(intakeFromGate2.getHeading(), driveToShoot4.getHeading())
+        gate2IntakeToShoot5 = follower.pathBuilder()
+                .addPath(new BezierLine(intakeFromGate2, driveToShoot5))
+                .setLinearHeadingInterpolation(intakeFromGate2.getHeading(), driveToShoot5.getHeading())
                 .build();
 
-        // shoot4 -> gate3
-        shoot4ToGate3 = follower.pathBuilder()
-                .addPath(new BezierLine(driveToShoot4, driveToGate3))
-                .setLinearHeadingInterpolation(driveToShoot4.getHeading(), driveToGate3.getHeading())
-                .build();
 
-        // gate3 -> intake3
-        gate3ToIntakePost = follower.pathBuilder()
-                .addPath(new BezierLine(driveToGate3, intakeFromGate3))
-                .setLinearHeadingInterpolation(driveToGate3.getHeading(), intakeFromGate3.getHeading())
-                .build();
-
-        // intake3 -> shoot5
-        intakePostToShoot5 = follower.pathBuilder()
-                .addPath(new BezierLine(intakeFromGate3, driveToShoot5))
-                .setLinearHeadingInterpolation(intakeFromGate3.getHeading(), driveToShoot5.getHeading())
-                .build();
-
-        // leave after Shoot5
+        // leave after Shoot4
         leaveOutChain = follower.pathBuilder()
                 .addPath(new BezierLine(driveToShoot5, leavePose))
                 .setLinearHeadingInterpolation(driveToShoot5.getHeading(), leavePose.getHeading())
                 .build();
+
+
+
+        // ============================
     }
 
     // ================= STATE HELPERS =================
@@ -339,16 +350,18 @@ public class BlueBackV15 extends OpMode {
                 }
                 break;
 
+            // After driveThroughLine1, run the exit curve
             case 3:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    follower.followPath(line1ExitCurve, true);
+                    follower.followPath(line1CurveToGate, true);
                     setPathState(4);
                 }
                 break;
 
             case 4:
                 if (!follower.isBusy()) {
+                    // requirement: when it gets to the last point, shut intake off, then goShoot2
                     intakeStop();
                     follower.followPath(goShoot2, true);
                     setPathState(5);
@@ -373,6 +386,7 @@ public class BlueBackV15 extends OpMode {
                 }
                 break;
 
+            // pickUpLine2 end -> goShoot3 (now BezierCurve)
             case 7:
                 if (!follower.isBusy()) {
                     intakeStop();
@@ -381,21 +395,23 @@ public class BlueBackV15 extends OpMode {
                 }
                 break;
 
+            // Shoot3 -> Gate2
             case 8:
                 if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
                         intakeStop();
-                        follower.followPath(goGate2Combined, true);
+                        follower.followPath(goGate1Combined, true);
                         setPathState(9);
                     }
                 }
                 break;
 
+            // ---- Gate 2 behavior ----
             case 9:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.75)) {
-                        follower.followPath(gate2ToIntakePost, true);
+                    if (pauseTime(0.75)) { //was 0.5
+                        follower.followPath(gate1ToIntake, true);
                         setPathState(10);
                     }
                 }
@@ -404,19 +420,20 @@ public class BlueBackV15 extends OpMode {
             case 10:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.75)) {
+                    if (pauseTime(0.4)) {
                         intakeStop();
-                        follower.followPath(intakePostToShoot4, true);
+                        follower.followPath(gate1IntakeToShoot4, true);
                         setPathState(11);
                     }
                 }
                 break;
 
+            // Shoot4 -> Gate2 again
             case 11:
                 if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
                         intakeStop();
-                        follower.followPath(shoot4ToGate3, true);
+                        follower.followPath(goGate2Combined, true);
                         setPathState(12);
                     }
                 }
@@ -426,7 +443,7 @@ public class BlueBackV15 extends OpMode {
                 if (!follower.isBusy()) {
                     intakeSlow();
                     if (pauseTime(0.75)) {
-                        follower.followPath(gate3ToIntakePost, true);
+                        follower.followPath(gate2ToIntake, true);
                         setPathState(13);
                     }
                 }
@@ -435,14 +452,15 @@ public class BlueBackV15 extends OpMode {
             case 13:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.75)) {
+                    if (pauseTime(0.40)) {
                         intakeStop();
-                        follower.followPath(intakePostToShoot5, true);
+                        follower.followPath(gate2IntakeToShoot5, true);
                         setPathState(14);
                     }
                 }
                 break;
 
+            // Shoot5 -> Leave
             case 14:
                 if (!follower.isBusy()) {
                     if (runShootWindowQuick()) {
@@ -644,9 +662,10 @@ public class BlueBackV15 extends OpMode {
             turret = hw.get(DcMotorEx.class, "turretSpin");
             turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             turret.setDirection(DcMotorSimple.Direction.REVERSE);
+            turret.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             limelight = hw.get(Limelight3A.class, "limelight");
-            limelight.pipelineSwitch(8);
+            limelight.pipelineSwitch(9);
             limelight.start();
 
             imu = hw.get(IMU.class, "imu");
@@ -673,13 +692,29 @@ public class BlueBackV15 extends OpMode {
         }
 
         public void saveFirstShotPosition() {
-            firstShotTurretTicks = turret.getCurrentPosition();
+            firstShotTurretTicks = turret.getCurrentPosition() + TURRET_OFFSET_TICKS;
             hasFirstShotTurretTicks = true;
+
+            turret.setTargetPosition(firstShotTurretTicks);
+            turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            turret.setPower(1.0);
+            lastPower = 1.0;
         }
 
         public void update(double now, double dt, double moveBlend, double omegaDps) {
 
             if (dt < 0.001) dt = 0.001;
+
+            // Once first shot is saved, stop all tracking and hard-hold this encoder position
+            if (hasFirstShotTurretTicks) {
+                turret.setTargetPosition(firstShotTurretTicks);
+                if (turret.getMode() != DcMotor.RunMode.RUN_TO_POSITION) {
+                    turret.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                }
+                turret.setPower(1.0);
+                lastPower = 1.0;
+                return;
+            }
 
             LLResult r = limelight.getLatestResult();
             if (r == null || !r.isValid()) {
