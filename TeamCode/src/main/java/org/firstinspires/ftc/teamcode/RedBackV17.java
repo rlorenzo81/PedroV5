@@ -107,29 +107,29 @@ public class RedBackV17 extends OpMode {
 
     private final Pose line1TowardsGate  = new Pose(127, 81, Math.toRadians(0)); //done
     private final Pose line1PressGate = new Pose(134, 75, Math.toRadians(0)); //done
-    private final Pose driveToShoot2 = new Pose(107, 97, Math.toRadians(41)); // was 93,93 (97) done.
+    private final Pose driveToShoot2 = new Pose(110, 97, Math.toRadians(40)); // was 93,93 (97) done.
     private final Pose toArtifactLine2 = new Pose(100, 58, Math.toRadians(0));//y was 60 done
     private final Pose driveThroughLine2 = new Pose(142, 58, Math.toRadians(0));//x was 5 done
 
     private final Pose line2ToShoot3Mid = new Pose(130, 40, Math.toRadians(53)); //done
 
-    private final Pose driveToShoot3= new Pose(107, 97, Math.toRadians(40.5)); // was 93,97 done
+    private final Pose driveToShoot3= new Pose(110, 97, Math.toRadians(40)); // was 107, 97, 40.5
     private final Pose driveTowardsGate1= new Pose(117, 55, Math.toRadians(25)); // was 95 done
 
     private final Pose driveToGate1= new Pose(138, 58, Math.toRadians(25)); // y was 62
 
     private final Pose intakeFromGate1 = new Pose(143, 51, Math.toRadians(75)); //y was 54, angle was 105 done
 
-    private final Pose driveToShoot4= new Pose(105, 97, Math.toRadians(41)); // was 93,95 done
+    private final Pose driveToShoot4= new Pose(110, 97, Math.toRadians(40)); // was 93,95 done
 
-    private final Pose driveTowardsGate2= new Pose(110, 55, Math.toRadians(25)); // was 95 done
+    private final Pose driveTowardsGate2= new Pose(125, 55, Math.toRadians(25)); // was 95 done
 
     private final Pose driveToGate2= new Pose(138, 58, Math.toRadians(25)); // was 2,71 done
 
     private final Pose intakeFromGate2 = new Pose(143, 54, Math.toRadians(75)); //angle was 105 done
 
     // (kept but unused in this flow)
-    private final Pose driveToShoot5 = new Pose(105, 97, Math.toRadians(41)); // was 93,93
+    private final Pose driveToShoot5 = new Pose(110, 97, Math.toRadians(40)); // was 93,93
 
     private final Pose leavePose = new Pose(115, 66, Math.toRadians(0));
 
