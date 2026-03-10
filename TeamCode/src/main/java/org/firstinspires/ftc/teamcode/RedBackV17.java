@@ -36,7 +36,7 @@ public class RedBackV17 extends OpMode {
     private double stateStartTime = 0.0;
 
     // RCRed-style target variable (ticks/sec). Change this value to change flywheel velocity.
-    double target = 1124.0; // change if needed was 1150 working good but some bounce outr
+    double target = 1150.0; // change if needed was 1150 working good but some bounce out, this is the speed it shoots
 
     // ================= TURRET =================
     private final TurretTracker turret = new TurretTracker();
@@ -54,7 +54,7 @@ public class RedBackV17 extends OpMode {
     // ================= SCORE WINDOW (AIM TIMEOUT) =================
     private static final double AIM_TIMEOUT_SEC = 0.9; //was 0.5
 
-    private static final int TURRET_OFFSET_TICKS = 0; // adjust this number
+    private static final int TURRET_OFFSET_TICKS = 100; // adjust this number
 
     // ================= LATCHED SHOOTING SEQUENCE =================
     private boolean shootingSequenceActive = false;
@@ -116,9 +116,9 @@ public class RedBackV17 extends OpMode {
     private final Pose driveToShoot3= new Pose(102, 80, Math.toRadians(41)); // was 107, 97, 40.5
     private final Pose driveTowardsGate1= new Pose(117, 55, Math.toRadians(25)); // was 95 done
 
-    private final Pose driveToGate1= new Pose(134, 58, Math.toRadians(25)); // y was 62
+    private final Pose driveToGate1= new Pose(136, 58, Math.toRadians(25)); // y was 62
 
-    private final Pose intakeFromGate1 = new Pose(141, 51, Math.toRadians(75)); //y was 54, angle was 105 done
+    private final Pose intakeFromGate1 = new Pose(142, 51.5, Math.toRadians(75)); //y was 54, angle was 105 done  x was 141 and y 51
 
     private final Pose driveToShoot4= new Pose(102, 80, Math.toRadians(41)); // was 93,95 done
 
@@ -420,7 +420,7 @@ public class RedBackV17 extends OpMode {
             case 10:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.3)) {
+                    if (pauseTime(0.7)) { // was 0.3
                         intakeSlow();
                         follower.followPath(gate1IntakeToShoot4, true);
                         setPathState(11);
@@ -452,7 +452,7 @@ public class RedBackV17 extends OpMode {
             case 13:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.30)) {
+                    if (pauseTime(0.6)) { // was 0.3
                         intakeSlow();
                         follower.followPath(gate2IntakeToShoot5, true);
                         setPathState(14);

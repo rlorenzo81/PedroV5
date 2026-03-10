@@ -24,7 +24,7 @@ public class Constants {
             .forwardZeroPowerAcceleration(-30.5311984)
             .lateralZeroPowerAcceleration(-52.95020916)
             .translationalPIDFCoefficients(new PIDFCoefficients(0.105, 0.0, 0.0035, 0.0))
-    .headingPIDFCoefficients(new PIDFCoefficients(1.15, 0, 0.0025, 0.01))
+    .headingPIDFCoefficients(new PIDFCoefficients(1.25, 0, 0.0025, 0.01)) //p was 1.15
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.02,0,0.0001,0.6,0.01))
             .centripetalScaling(0.00059);
     //.driveKPIDFCoefficients(new FilteredPIDFCoefficients(0.01, 0.0, 0.0, 0.0,0.01, driveKalmanFilterParameters);

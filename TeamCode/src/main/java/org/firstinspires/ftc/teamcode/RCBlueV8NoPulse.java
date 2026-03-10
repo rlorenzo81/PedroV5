@@ -2,24 +2,21 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
-
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 
-@TeleOp(name="RC RED 8NP", group="Robot")
-public class RCREDV8NoPulse extends OpMode {
+@TeleOp(name="RC Blue 8NP", group="Robot")
+public class RCBlueV8NoPulse extends OpMode {
 
     // ----------------- DRIVE -----------------
     private DcMotor lf, lr, rf, rr, fi, bi;
@@ -322,7 +319,7 @@ public class RCREDV8NoPulse extends OpMode {
 
         // ----------------- LIMELIGHT -----------------
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(9);
+        limelight.pipelineSwitch(8);
         limelight.start();
 
         // ----------------- IMU -----------------
@@ -464,7 +461,7 @@ public class RCREDV8NoPulse extends OpMode {
 
         if (a2Pressed) {
             shotRangeMode = ShotRangeMode.CLOSE;
-            rt.setPosition(0.9);
+            rt.setPosition(1.0);
             shooterSetpoint = 1260;//1290
         }
         if (y2Pressed) {
