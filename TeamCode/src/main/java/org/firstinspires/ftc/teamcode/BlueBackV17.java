@@ -36,7 +36,7 @@ public class BlueBackV17 extends OpMode {
     private double stateStartTime = 0.0;
 
     // RCRed-style target variable (ticks/sec). Change this value to change flywheel velocity.
-    double target = 1115.0; // change if needed was 1150 working good but some bounce outr
+    double target = 1135.0; // change if needed was 1150 working good but some bounce out was 1125
 
     // ================= TURRET =================
     private final TurretTracker turret = new TurretTracker();
@@ -114,7 +114,7 @@ public class BlueBackV17 extends OpMode {
     private final Pose driveToShoot3= new Pose(43, 86, Math.toRadians(127)); // was 93,97
     private final Pose driveTowardsGate1= new Pose(30, 65, Math.toRadians(127)); // was 95
 
-    private final Pose driveToGate1= new Pose(3, 58, Math.toRadians(155)); // was 2,71
+    private final Pose driveToGate1= new Pose(2.5, 58, Math.toRadians(155)); // was 3
 
     private final Pose intakeFromGate1 = new Pose(2.5, 55, Math.toRadians(127)); //angle was 105
 
@@ -122,9 +122,9 @@ public class BlueBackV17 extends OpMode {
 
     private final Pose driveTowardsGate2= new Pose(30, 65, Math.toRadians(127)); // was 95
 
-    private final Pose driveToGate2= new Pose(3, 58, Math.toRadians(155)); // was 2,71
+    private final Pose driveToGate2= new Pose(2.5, 58, Math.toRadians(155)); // was 2,71
 
-    private final Pose intakeFromGate2 = new Pose(2.5, 55, Math.toRadians(127)); //angle was 105
+    private final Pose intakeFromGate2 = new Pose(2.5, 53, Math.toRadians(127)); //angle was 105
 
     // (kept but unused in this flow)
     private final Pose driveToShoot5 = new Pose(43, 86, Math.toRadians(127)); // was 93,93
@@ -418,7 +418,7 @@ public class BlueBackV17 extends OpMode {
                 if (!follower.isBusy()) {
                     intakeSlow();
                     if (pauseTime(0.4)) {
-                        intakeStop();
+                        intakeSlow(); //was stop
                         follower.followPath(gate1IntakeToShoot4, true);
                         setPathState(11);
                     }
@@ -439,7 +439,7 @@ public class BlueBackV17 extends OpMode {
             case 12:
                 if (!follower.isBusy()) {
                     intakeSlow();
-                    if (pauseTime(0.75)) {
+                    if (pauseTime(0.75)) { // was 0.75
                         follower.followPath(gate2ToIntake, true);
                         setPathState(13);
                     }
@@ -545,7 +545,7 @@ public class BlueBackV17 extends OpMode {
         rt = hardwareMap.get(Servo.class, "rt");
         ki = hardwareMap.get(Servo.class, "ki");
 
-        rt.setPosition(1.0); //was 0.9
+        rt.setPosition(0.7); //was 1.0
         ki.setPosition(0.2);
 
         turret.init(hardwareMap);

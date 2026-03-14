@@ -141,7 +141,7 @@ public class RCBlueV8NoPulse extends OpMode {
     private static final double STATIONARY_KP_MULT = 0.55;
     private static final double STATIONARY_KD_MULT = 1.20;
 
-    private static final double STATIONARY_TX_DEADBAND = 2.0;
+    private static final double STATIONARY_TX_DEADBAND = 1.5;
     private static final double STATIONARY_MINPOWER_ENABLE_ERR = 999.0; // disable min-power at rest
 
     // ===================== TURN-STOP SETTLE (ANTI-OVERSHOOT WHEN STOP TURNING) =====================
@@ -169,7 +169,7 @@ public class RCBlueV8NoPulse extends OpMode {
     private static final double TRIGGER_DEADBAND = 0.10;
 
     // ===================== FAR TURRET OFFSET (ONLY WHEN DPAD_DOWN FAR MODE) =====================
-    private static final double FAR_TURRET_TX_OFFSET_DEG = 3.0; // <-- CHANGE THIS
+    private static final double FAR_TURRET_TX_OFFSET_DEG = 0.0; // <-- CHANGE THIS was 3.0
 
     // ===================== NEW SHOOTER SPINUP: VELOCITY RAMP (NO RAW POWER / NO VOLT COMP) =====================
     private static final double RAMP_SEC_CLOSE = 0.40; // start here after weight removal
@@ -461,19 +461,19 @@ public class RCBlueV8NoPulse extends OpMode {
 
         if (a2Pressed) {
             shotRangeMode = ShotRangeMode.CLOSE;
-            rt.setPosition(1.0);
+            rt.setPosition(0.85);
             shooterSetpoint = 1260;//1290
         }
         if (y2Pressed) {
             shotRangeMode = ShotRangeMode.CLOSE;
-            shooterSetpoint = 1150; //1100
-            rt.setPosition(0.9); //was .7
+            shooterSetpoint = 1100; //1100
+            rt.setPosition(0.7); //was .7
         }
 
         if (ddownPressed) {
             shotRangeMode = ShotRangeMode.FAR;
-            shooterSetpoint = 1590; //1650/1600 range
-            rt.setPosition(1.0);
+            shooterSetpoint = 1650; //1650/1600 range was 1500
+            rt.setPosition(0.9);
         }
 
         a2WasPressed = a2Now;
